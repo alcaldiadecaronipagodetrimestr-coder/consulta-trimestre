@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SAT Caroní - Determinación y Solvencia Vehicular</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
@@ -13,7 +12,6 @@
     .topbar { background: #0a3480; color: #fff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .topbar h1 { font-size: 16px; letter-spacing: .3px; }
 
-    /* BARRA OSCURA TIPO VISOR OFICIAL AL ESCANEAR QR */
     .viewer-bar {
       background: #2b2c2f; color: #fff; padding: 13px 18px;
       display: flex; align-items: center; justify-content: space-between;
@@ -36,7 +34,6 @@
     .login-box input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; margin: 12px 0; text-align: center; }
     .hidden { display: none !important; }
 
-    /* PANEL ADMIN */
     .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 10px; }
     .field label { display: block; font-size: 11px; font-weight: bold; color: #334155; margin-bottom: 3px; text-transform: uppercase; }
     .field input, .field select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; }
@@ -46,12 +43,10 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
-    /* CONTENEDOR ESCALABLE */
     .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
     body.viewer-mode .sheet-wrap { overflow: hidden; display: flex; justify-content: center; padding-bottom: 20px; }
     #escalaBox { transform-origin: top center; }
 
-    /* MODO PANEL: 1 SOLA HOJA SIN LETRAS LATERALES */
     #documentoPdf {
       width: 215.9mm; margin: 0 auto; background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,.18);
@@ -62,7 +57,6 @@
     .cut-line { border-top: 1.5px dashed #444; margin: 4px 0 8px; }
     .side-text { display: none; }
 
-    /* MODO VISOR QR: 2 HOJAS BLANCAS SEPARADAS + LETRAS LATERALES */
     body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
     body.viewer-mode .sheet {
       min-height: 274mm; margin: 0 auto 14px auto;
@@ -83,7 +77,6 @@
     }
     .sheet-content { position: relative; z-index: 1; }
 
-    /* ENCABEZADO 3 COLUMNAS CON QR Y LOGO GRANDES */
     .doc-header {
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
       gap: 8px; min-height: 24mm; margin-bottom: 3mm;
@@ -115,7 +108,6 @@
       font-size: 8.3px; padding: 7px; margin: 9px 0;
     }
 
-    /* RECUADRO PAGADA 1 CM MÁS ANCHO */
     .notes-row { display: grid; grid-template-columns: 1fr 224px; gap: 12px; align-items: center; margin: 8px 0 10px; }
     .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; }
     .pagada-box {
@@ -124,7 +116,6 @@
     }
     .pagada-box strong { display: block; font-size: 11.5px; }
 
-    /* CARNET RECORTADO 1 CM DE CADA LADO + LOGO GRANDE */
     .cert-outer {
       border: 1.5px dashed #444; padding: 8px; margin: 0 10mm;
       display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;
@@ -158,7 +149,6 @@
 </head>
 <body>
 
-  <!-- BARRA OSCURA DE DESCARGA (SOLO AL ESCANEAR QR) -->
   <div id="barraViewer" class="viewer-bar no-print hidden">
     <button type="button" onclick="descargarPDF()">
       <span style="font-size:19px;">⬇</span> Download
@@ -166,14 +156,12 @@
     <span id="dlStatus" class="dl-status"></span>
   </div>
 
-  <!-- BARRA SUPERIOR SOLO PARA EL PANEL PRIVADO -->
   <div id="barraTop" class="topbar no-print hidden">
     <h1>SAT Caroní — Panel Administrativo</h1>
     <button type="button" class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
   </div>
 
   <div class="container">
-    <!-- ACCESO PRIVADO -->
     <div id="vistaLogin" class="card login-box no-print">
       <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
       <input id="inputPass" type="password" autocomplete="off" onkeydown="if(event.key==='Enter') iniciarSesion()" />
@@ -183,7 +171,6 @@
 
     <div id="msgErrorQr" class="card no-print hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
 
-    <!-- PANEL ADMINISTRATIVO PRIVADO -->
     <div id="vistaAdmin" class="card no-print hidden">
       <div class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
         <h3 style="font-size:14px; color:#0f172a;">Tasa BCV Oficial y Tarifas</h3>
@@ -278,17 +265,14 @@
       </div>
     </div>
 
-    <!-- BOTONES DE PDF (VISTA PANEL) -->
     <div id="barraPdf" class="toolbar-pdf no-print hidden">
       <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
       <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
     </div>
 
-    <!-- CONTENEDOR DEL DOCUMENTO -->
     <div id="contenedorHoja" class="sheet-wrap hidden">
       <div id="escalaBox">
         <div id="documentoPdf">
-          <!-- SECCIÓN / HOJA 1 -->
           <div class="sheet sheet-page1">
             <div class="side-text">Escanee el código QR y será dirigido a la página web oficial para verificar la autenticidad de este documento.</div>
             <img id="imgWatermark1" class="watermark" alt="" />
@@ -406,7 +390,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN / HOJA 2 -->
           <div class="sheet sheet-page2">
             <img id="imgWatermark2" class="watermark" alt="" />
             <div class="sheet-content">
@@ -461,8 +444,7 @@
       </div>
     </div>
   </div>
-<!-- FIREBASE COMPAT (NUBE EN TIEMPO REAL) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
     const ADMIN_PASS = "23456";
@@ -885,40 +867,14 @@
       setTimeout(ajustarEscalaVisor, 60);
     }
 
-    async function descargarPDF() {
+    function descargarPDF() {
       if (!registroActual) return;
-      const box = document.getElementById("escalaBox");
-      const wrap = document.getElementById("contenedorHoja");
-      const el = document.getElementById("documentoPdf");
       const st = document.getElementById("dlStatus");
-      if (st) st.textContent = "Generando PDF...";
-
-      const prevTransform = box.style.transform;
-      const prevHeight = box.style.height;
-      const prevOverflow = wrap.style.overflow;
-      const prevDisplay = wrap.style.display;
-
-      box.style.transform = "none";
-      box.style.height = "auto";
-      wrap.style.overflow = "visible";
-      wrap.style.display = "block";
-
-      try {
-        await html2pdf().set({
-          margin: [2, 2, 2, 2],
-          filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, width: el.scrollWidth },
-          jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-          pagebreak: { mode: ["css", "legacy"] }
-        }).from(el).save();
-      } finally {
-        box.style.transform = prevTransform;
-        box.style.height = prevHeight;
-        wrap.style.overflow = prevOverflow;
-        wrap.style.display = prevDisplay;
+      if (st) st.textContent = "Abriendo PDF...";
+      setTimeout(() => {
+        window.print();
         if (st) st.textContent = "";
-      }
+      }, 150);
     }
 
     cargarTodo();
