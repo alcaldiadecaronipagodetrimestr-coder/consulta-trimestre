@@ -173,7 +173,7 @@
   </div>
 
   <div class="container">
-    <!-- ACCESO PRIVADO (SIN PORTAL PÚBLICO) -->
+    <!-- ACCESO PRIVADO -->
     <div id="vistaLogin" class="card login-box no-print">
       <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
       <input id="inputPass" type="password" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter') iniciarSesion()" />
@@ -470,18 +470,18 @@
     // =========================================================================
     const ADMIN_PASS = "23456";
 
-    // Pon aquí el nombre exacto de tu .png subido al repositorio (ej: "logo.png"):
-    const IMAGEN_LOGO_CARONI = "";
+    // Logo subido en el repositorio:
+    const IMAGEN_LOGO_CARONI = "./logo.png";
     const IMAGEN_MARCA_AGUA  = "";
 
-    // PEGA AQUÍ LAS CLAVES DE TU PROYECTO EN FIREBASE CONSOLE:
+    // CLAVES DE TU PROYECTO EN FIREBASE CONSOLE (trimestre-caroni):
     const GITHUB_FIREBASE_CONFIG = {
-      apiKey: "",
-      authDomain: "",
-      projectId: "",
-      storageBucket: "",
-      messagingSenderId: "",
-      appId: ""
+      apiKey: "AIzaSyAaBYEh222rFs80r15q-V1UNFZ7XUiFRec",
+      authDomain: "trimestre-caroni.firebaseapp.com",
+      projectId: "trimestre-caroni",
+      storageBucket: "trimestre-caroni.firebasestorage.app",
+      messagingSenderId: "132339528275",
+      appId: "1:132339528275:web:195a4e74a247d674e90ca6"
     };
 
     const LOGO_SVG_DEFAULT = "data:image/svg+xml;utf8," + encodeURIComponent(
@@ -534,7 +534,6 @@
       return Number(n || 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // AJUSTA EL TAMAÑO DE LAS HOJAS AL ANCHO DEL TELÉFONO EN MODO VISOR QR
     function ajustarEscalaVisor() {
       const box = document.getElementById("escalaBox");
       const doc = document.getElementById("documentoPdf");
@@ -618,7 +617,7 @@
       renderTablaAdmin();
       await actualizarTasaBCV();
 
-      // SI VIENE DE ESCANEAR UN QR (?id=...) -> DIRECTO AL VISOR DE 2 HOJAS
+      // SI VIENE DE ESCANEAR UN QR (?id=...) -> DIRECTO AL VISOR DE 2 HOJAS Y DESCARGA SU PDF
       const params = new URLSearchParams(window.location.search);
       const idQr = params.get("id");
       if (idQr) {
@@ -634,6 +633,7 @@
           document.body.classList.add("viewer-mode");
           document.getElementById("barraViewer").classList.remove("hidden");
           mostrarPlanilla(encontrado, true);
+          setTimeout(() => { descargarPDF(); }, 900);
         } else {
           const err = document.getElementById("msgErrorQr");
           err.textContent = "No se encontró el documento N° " + idQr;
@@ -648,7 +648,7 @@
     function getAssets() {
       const saved = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
       return {
-        logo: saved.logo || IMAGEN_LOGO_CARONI || LOGO_SVG_DEFAULT,
+        logo: IMAGEN_LOGO_CARONI || saved.logo || LOGO_SVG_DEFAULT,
         watermark: saved.watermark || IMAGEN_MARCA_AGUA || "",
         opacity: saved.opacity !== undefined ? saved.opacity : 8
       };
@@ -802,7 +802,14 @@
       const idx = registros.findIndex(r => r.numero === numero);
       if (idx >= 0) registros[idx] = reg; else registros.unshift(reg);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
-      if (db) { try { await db.collection("solvencias").doc(numero).set(reg); } catch (e) {} }
+      if (db) {
+        try {
+          await db.collection("solvencias").doc(numero).set(reg);
+        } catch (e) {
+          alert("Ojo: no guardó en la nube de Firebase. Revisa que hayas creado Firestore Database y publicado las reglas.");
+          return;
+        }
+      }
 
       renderTablaAdmin();
       mostrarPlanilla(reg, false);
@@ -895,7 +902,6 @@
       const st = document.getElementById("dlStatus");
       if (st) st.textContent = "Generando PDF...";
 
-      // Quitamos escala temporalmente para que el PDF baje en tamaño carta real
       const prevTransform = box.style.transform;
       const prevHeight = box.style.height;
       box.style.transform = "none";
