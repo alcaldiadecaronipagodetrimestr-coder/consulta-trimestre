@@ -9,33 +9,31 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
-    body.viewer-mode { background: #202124; }
+    body.viewer-mode { background: #202124; overflow-x: hidden; }
     .topbar { background: #0a3480; color: #fff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .topbar h1 { font-size: 16px; letter-spacing: .3px; }
-    .topbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* BARRA OSCURA SOLO AL ESCANEAR QR */
+    /* BARRA OSCURA TIPO VISOR OFICIAL AL ESCANEAR QR */
     .viewer-bar {
-      background: #2b2c2f; color: #fff; padding: 12px 18px;
-      display: flex; align-items: center; gap: 10px;
+      background: #2b2c2f; color: #fff; padding: 13px 18px;
+      display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 50; border-bottom: 1px solid #3c4043;
     }
     .viewer-bar button {
       background: transparent; border: none; color: #fff; font-size: 15px;
-      display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;
+      display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500;
     }
+    .viewer-bar .dl-status { font-size: 12px; color: #9aa0a6; }
 
     .btn { border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer; }
     .btn-primary { background: #0a3480; color: #fff; }
-    .btn-light { background: #fff; color: #0a3480; }
     .btn-success { background: #15803d; color: #fff; }
     .btn-danger { background: #b91c1c; color: #fff; }
-    .btn-dark { background: #1f2937; color: #fff; }
     .container { max-width: 960px; margin: 18px auto; padding: 0 12px; }
-    body.viewer-mode .container { max-width: 100%; margin: 14px auto; }
+    body.viewer-mode .container { max-width: 100%; margin: 12px auto; padding: 0 10px; }
     .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.08); margin-bottom: 18px; }
-    .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .search-row input { flex: 1; min-width: 220px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+    .login-box { max-width: 360px; margin: 60px auto; text-align: center; }
+    .login-box input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; margin: 12px 0; text-align: center; }
     .hidden { display: none !important; }
 
     /* PANEL ADMIN */
@@ -48,8 +46,12 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
-    /* MODO NORMAL (PANEL / CLIENTE): 1 SOLA HOJA SIN LETRAS LATERALES */
+    /* CONTENEDOR ESCALABLE PARA QUE EN TELÉFONO SE VEA COMPLETO SIN SCROLL LATERAL */
     .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
+    body.viewer-mode .sheet-wrap { overflow: hidden; display: flex; justify-content: center; padding-bottom: 20px; }
+    #escalaBox { transform-origin: top center; }
+
+    /* MODO PANEL: 1 SOLA HOJA SIN LETRAS LATERALES */
     #documentoPdf {
       width: 215.9mm; margin: 0 auto; background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,.18);
@@ -60,11 +62,11 @@
     .cut-line { border-top: 1.5px dashed #444; margin: 4px 0 8px; }
     .side-text { display: none; }
 
-    /* MODO VISOR QR (body.viewer-mode): 2 HOJAS SEPARADAS + LETRAS LATERALES */
+    /* MODO VISOR QR: 2 HOJAS BLANCAS SEPARADAS + LETRAS LATERALES */
     body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
     body.viewer-mode .sheet {
-      min-height: 279.4mm; margin: 0 auto 16px auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+      height: 279.4mm; margin: 0 auto 14px auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,.45);
     }
     body.viewer-mode .sheet-page1 { padding: 12mm 11mm 15mm 14mm; page-break-after: always; }
     body.viewer-mode .sheet-page2 { padding: 14mm 11mm 15mm 11mm; }
@@ -81,7 +83,7 @@
     }
     .sheet-content { position: relative; z-index: 1; }
 
-    /* ENCABEZADO 3 COLUMNAS CON QR Y LOGO MÁS GRANDES */
+    /* ENCABEZADO 3 COLUMNAS CON QR Y LOGO GRANDES */
     .doc-header {
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
       gap: 8px; min-height: 24mm; margin-bottom: 3mm;
@@ -89,7 +91,7 @@
     .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.65; }
     .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
-    .logo-top { max-height: 76px; max-width: 195px; object-fit: contain; }
+    .logo-top { max-height: 88px; max-width: 225px; object-fit: contain; }
 
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
@@ -113,7 +115,7 @@
       font-size: 8.3px; padding: 7px; margin: 9px 0;
     }
 
-    /* RECUADRO PAGADA 1 CM MÁS ANCHO (224px) */
+    /* RECUADRO PAGADA 1 CM MÁS ANCHO */
     .notes-row { display: grid; grid-template-columns: 1fr 224px; gap: 12px; align-items: center; margin: 8px 0 10px; }
     .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; }
     .pagada-box {
@@ -122,33 +124,34 @@
     }
     .pagada-box strong { display: block; font-size: 11.5px; }
 
-    /* CARNET MITAD Y MITAD (50% / 50%) */
+    /* CARNET RECORTADO 1 CM DE CADA LADO + LOGO GRANDE */
     .cert-outer {
-      border: 1.5px dashed #444; padding: 8px;
+      border: 1.5px dashed #444; padding: 8px; margin: 0 10mm;
       display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;
     }
     .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 7px; font-size: 8px; position: relative; }
     .cert-head { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 4px; margin-bottom: 4px; }
-    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.2px; line-height: 1.3; }
-    .cert-title { text-align: center; font-weight: bold; font-size: 8.2px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
-    .cert-props { border: 1px solid #000; border-radius: 5px; padding: 4px 6px; margin-bottom: 4px; line-height: 1.4; font-size: 7.8px; }
-    .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.8px; }
+    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7px; line-height: 1.3; }
+    .cert-title { text-align: center; font-weight: bold; font-size: 8px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
+    .cert-props { border: 1px solid #000; border-radius: 5px; padding: 4px 6px; margin-bottom: 4px; line-height: 1.4; font-size: 7.6px; }
+    .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.6px; }
     .cert-tbl td { border: 1px solid #000; padding: 2.5px 4px; }
-    .num-red { color: #c00; font-weight: bold; font-size: 9.5px; text-align: center; }
-    .cert-foot { text-align: center; font-size: 6.4px; margin-top: 4px; line-height: 1.25; }
+    .num-red { color: #c00; font-weight: bold; font-size: 9.2px; text-align: center; }
+    .cert-foot { text-align: center; font-size: 6.2px; margin-top: 4px; line-height: 1.25; }
 
     .cert-right {
       position: relative; display: flex; justify-content: center; align-items: center;
       min-height: 46mm; width: 100%;
     }
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
-    .logo-cert { max-height: 82px; max-width: 175px; object-fit: contain; }
+    .logo-cert { max-height: 98px; max-width: 210px; object-fit: contain; }
     .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
 
     @media print {
       body, body.viewer-mode { background: #fff; }
       .no-print { display: none !important; }
-      .sheet-wrap { overflow: visible; padding: 0; }
+      .sheet-wrap { overflow: visible; padding: 0; display: block !important; }
+      #escalaBox { transform: none !important; height: auto !important; }
       #documentoPdf, .sheet { box-shadow: none; margin: 0; }
     }
   </style>
@@ -158,39 +161,32 @@
   <!-- BARRA OSCURA DE DESCARGA (SOLO AL ESCANEAR QR) -->
   <div id="barraViewer" class="viewer-bar no-print hidden">
     <button onclick="descargarPDF()">
-      <span style="font-size:18px;">⬇</span> Download
+      <span style="font-size:19px;">⬇</span> Download
     </button>
+    <span id="dlStatus" class="dl-status"></span>
   </div>
 
-  <div id="barraTop" class="topbar no-print">
-    <h1>SAT Caroní — Portal de Verificación Vehicular</h1>
-    <div class="actions">
-      <button class="btn btn-light" onclick="mostrarVista('publica')">Consultar</button>
-      <button class="btn btn-dark" onclick="abrirAdmin()">Panel Administrativo</button>
-    </div>
+  <!-- BARRA SUPERIOR SOLO PARA EL PANEL PRIVADO -->
+  <div id="barraTop" class="topbar no-print hidden">
+    <h1>SAT Caroní — Panel Administrativo</h1>
+    <button class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
   </div>
 
   <div class="container">
-    <!-- VISTA PÚBLICA -->
-    <div id="vistaPublica" class="card no-print">
-      <h2 style="font-size:16px; color:#0a3480; margin-bottom:8px;">Consultar Certificado de Solvencia</h2>
-      <p style="font-size:13px; color:#475569; margin-bottom:10px;">Ingrese su número de planilla, placa o cédula/RIF para visualizar y descargar su PDF.</p>
-      <div class="search-row">
-        <input id="inputBuscar" type="text" placeholder="Ej: 0000152543, MBH93W o V12888493" />
-        <button class="btn btn-primary" onclick="buscarRegistro()">Buscar</button>
-      </div>
-      <div id="msgBusqueda" style="margin-top:8px; font-size:13px; color:#b91c1c;"></div>
+    <!-- ACCESO PRIVADO (SIN PORTAL PÚBLICO) -->
+    <div id="vistaLogin" class="card login-box no-print">
+      <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
+      <input id="inputPass" type="password" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter') iniciarSesion()" />
+      <button class="btn btn-primary" style="width:100%;" onclick="iniciarSesion()">Entrar</button>
+      <div id="msgLogin" style="margin-top:8px; font-size:13px; color:#b91c1c;"></div>
     </div>
+
+    <div id="msgErrorQr" class="card no-print hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
 
     <!-- PANEL ADMINISTRATIVO PRIVADO -->
     <div id="vistaAdmin" class="card no-print hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <h2 style="font-size:17px; color:#0a3480;">Panel Administrativo (Privado)</h2>
-        <button class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
-      </div>
-
-      <div class="admin-section">
-        <h3 style="font-size:14px; color:#0f172a;">Tasa BCV Oficial y Tarifas (Solo visible aquí)</h3>
+      <div class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
+        <h3 style="font-size:14px; color:#0f172a;">Tasa BCV Oficial y Tarifas</h3>
         <div class="grid-form">
           <div class="field">
             <label>Tasa BCV Oficial (Bs por $)</label>
@@ -282,7 +278,7 @@
       </div>
     </div>
 
-    <!-- BOTONES DE PDF (VISTA NORMAL - 1 HOJA) -->
+    <!-- BOTONES DE PDF (VISTA PANEL) -->
     <div id="barraPdf" class="toolbar-pdf no-print hidden">
       <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
       <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
@@ -290,172 +286,174 @@
 
     <!-- CONTENEDOR DEL DOCUMENTO -->
     <div id="contenedorHoja" class="sheet-wrap hidden">
-      <div id="documentoPdf">
-        <!-- SECCIÓN / HOJA 1 -->
-        <div class="sheet sheet-page1">
-          <div class="side-text">Escanee el código QR y será dirigido a la página web oficial para verificar la autenticidad de este documento.</div>
-          <img id="imgWatermark1" class="watermark" alt="" />
-          <div class="sheet-content">
-            <div class="doc-header">
-              <div class="doc-header-left">
-                REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
-                ESTADO BOLÍVAR<br/>
-                ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
-                SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+      <div id="escalaBox">
+        <div id="documentoPdf">
+          <!-- SECCIÓN / HOJA 1 -->
+          <div class="sheet sheet-page1">
+            <div class="side-text">Escanee el código QR y será dirigido a la página web oficial para verificar la autenticidad de este documento.</div>
+            <img id="imgWatermark1" class="watermark" alt="" />
+            <div class="sheet-content">
+              <div class="doc-header">
+                <div class="doc-header-left">
+                  REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
+                  ESTADO BOLÍVAR<br/>
+                  ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
+                  SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+                </div>
+                <div class="doc-header-center"><div id="qrTop"></div></div>
+                <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
               </div>
-              <div class="doc-header-center"><div id="qrTop"></div></div>
-              <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
-            </div>
 
-            <div class="title-box">DETERMINACIÓN DE IMPUESTO SOBRE VEHÍCULOS</div>
+              <div class="title-box">DETERMINACIÓN DE IMPUESTO SOBRE VEHÍCULOS</div>
 
-            <table class="meta-table">
-              <tr>
-                <td class="lbl">Determinación de impuesto</td>
-                <td><span class="lbl">Período:</span> <span id="dPeriodo" class="val"></span></td>
-                <td><span class="lbl">Fecha:</span> <span id="dFecha"></span></td>
-                <td class="val-center"><span class="lbl">N°</span> <span id="dNumero"></span></td>
-              </tr>
-            </table>
+              <table class="meta-table">
+                <tr>
+                  <td class="lbl">Determinación de impuesto</td>
+                  <td><span class="lbl">Período:</span> <span id="dPeriodo" class="val"></span></td>
+                  <td><span class="lbl">Fecha:</span> <span id="dFecha"></span></td>
+                  <td class="val-center"><span class="lbl">N°</span> <span id="dNumero"></span></td>
+                </tr>
+              </table>
 
-            <div class="bar-blue">DATOS DEL CONTRIBUYENTE</div>
-            <table class="data-table">
-              <tr>
-                <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dRif" class="val"></span></td>
-                <td colspan="2"><span class="lbl">Nombre o razón social:</span> <span id="dNombre" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="2"><span class="lbl">Representante legal:</span> <span id="dRep" class="val"></span></td>
-                <td style="width:26%;"><span class="lbl">C.I.:</span> <span id="dCi" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="3"><span class="lbl">Domicilio fiscal:</span> <span id="dDomicilio" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="2"><span class="lbl">Estado:</span> <span id="dEstado" class="val"></span></td>
-                <td><span class="lbl">Municipio:</span> <span id="dMunicipio" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="2"><span class="lbl">Parroquia:</span> <span id="dParroquia" class="val"></span></td>
-                <td><span class="lbl">Sector:</span> <span id="dSector" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="2"><span class="lbl">Teléfonos:</span> <span id="dTel"></span></td>
-                <td><span class="lbl">Correo electrónico:</span> <span id="dCorreo"></span></td>
-              </tr>
-            </table>
+              <div class="bar-blue">DATOS DEL CONTRIBUYENTE</div>
+              <table class="data-table">
+                <tr>
+                  <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dRif" class="val"></span></td>
+                  <td colspan="2"><span class="lbl">Nombre o razón social:</span> <span id="dNombre" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="lbl">Representante legal:</span> <span id="dRep" class="val"></span></td>
+                  <td style="width:26%;"><span class="lbl">C.I.:</span> <span id="dCi" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="3"><span class="lbl">Domicilio fiscal:</span> <span id="dDomicilio" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="lbl">Estado:</span> <span id="dEstado" class="val"></span></td>
+                  <td><span class="lbl">Municipio:</span> <span id="dMunicipio" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="lbl">Parroquia:</span> <span id="dParroquia" class="val"></span></td>
+                  <td><span class="lbl">Sector:</span> <span id="dSector" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="lbl">Teléfonos:</span> <span id="dTel"></span></td>
+                  <td><span class="lbl">Correo electrónico:</span> <span id="dCorreo"></span></td>
+                </tr>
+              </table>
 
-            <div class="bar-blue">DATOS DEL VEHÍCULO</div>
-            <table class="data-table">
-              <tr>
-                <td colspan="3"><span class="lbl">Tipo de vehículo:</span> <span id="dTipo" class="val"></span></td>
-                <td colspan="3"><span class="lbl">Placa / Serial de Carrocería:</span> <span id="dSerial" class="val"></span></td>
-              </tr>
-              <tr>
-                <td colspan="2"><span class="lbl">Marca:</span> <span id="dMarca" class="val"></span></td>
-                <td><span class="lbl">Año:</span> <span id="dAnio"></span></td>
-                <td colspan="3"><span class="lbl">Modelo:</span> <span id="dModelo" class="val"></span></td>
-              </tr>
-              <tr>
-                <td><span class="lbl">Watts:</span> <span id="dWatts" class="val"></span></td>
-                <td><span class="lbl">Peso / Carga:</span> <span id="dPeso" class="val"></span></td>
-                <td><span class="lbl">Puestos:</span> <span id="dPuestos" class="val"></span></td>
-                <td><span class="lbl">Ejes:</span> <span id="dEjes" class="val"></span></td>
-                <td><span class="lbl">Capacidad Carga:</span> <span id="dCapacidad" class="val"></span></td>
-                <td><span class="lbl">Cilindrada:</span> <span id="dCilindrada" class="val"></span></td>
-              </tr>
-            </table>
+              <div class="bar-blue">DATOS DEL VEHÍCULO</div>
+              <table class="data-table">
+                <tr>
+                  <td colspan="3"><span class="lbl">Tipo de vehículo:</span> <span id="dTipo" class="val"></span></td>
+                  <td colspan="3"><span class="lbl">Placa / Serial de Carrocería:</span> <span id="dSerial" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td colspan="2"><span class="lbl">Marca:</span> <span id="dMarca" class="val"></span></td>
+                  <td><span class="lbl">Año:</span> <span id="dAnio"></span></td>
+                  <td colspan="3"><span class="lbl">Modelo:</span> <span id="dModelo" class="val"></span></td>
+                </tr>
+                <tr>
+                  <td><span class="lbl">Watts:</span> <span id="dWatts" class="val"></span></td>
+                  <td><span class="lbl">Peso / Carga:</span> <span id="dPeso" class="val"></span></td>
+                  <td><span class="lbl">Puestos:</span> <span id="dPuestos" class="val"></span></td>
+                  <td><span class="lbl">Ejes:</span> <span id="dEjes" class="val"></span></td>
+                  <td><span class="lbl">Capacidad Carga:</span> <span id="dCapacidad" class="val"></span></td>
+                  <td><span class="lbl">Cilindrada:</span> <span id="dCilindrada" class="val"></span></td>
+                </tr>
+              </table>
 
-            <div class="bar-blue">DATOS DEL PROPIETARIO</div>
-            <table class="data-table">
-              <tr>
-                <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dPropRif" class="val"></span></td>
-                <td><span class="lbl">Nombre o razón social:</span> <span id="dPropNombre" class="val"></span></td>
-              </tr>
-            </table>
+              <div class="bar-blue">DATOS DEL PROPIETARIO</div>
+              <table class="data-table">
+                <tr>
+                  <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dPropRif" class="val"></span></td>
+                  <td><span class="lbl">Nombre o razón social:</span> <span id="dPropNombre" class="val"></span></td>
+                </tr>
+              </table>
 
-            <div class="bar-blue">DATOS DE LA DETERMINACIÓN</div>
-            <table class="data-table">
-              <tr>
-                <td colspan="2" class="val-right">Impuesto (Bs)</td>
-                <td style="width:22%;" class="val-right" id="dImpuestoBs"></td>
-              </tr>
-              <tr>
-                <td colspan="2" class="val-right">Descuento (Bs)</td>
-                <td class="val-right" id="dDescuentoBs"></td>
-              </tr>
-              <tr>
-                <td style="width:35%;"><span class="lbl">TOTAL A PAGAR (UCD)</span></td>
-                <td class="val-center"><strong id="dUcd"></strong> &nbsp;|&nbsp; <span class="lbl">TOTAL A PAGAR (Bs)</span></td>
-                <td class="val-right" id="dTotalBs"></td>
-              </tr>
-            </table>
+              <div class="bar-blue">DATOS DE LA DETERMINACIÓN</div>
+              <table class="data-table">
+                <tr>
+                  <td colspan="2" class="val-right">Impuesto (Bs)</td>
+                  <td style="width:22%;" class="val-right" id="dImpuestoBs"></td>
+                </tr>
+                <tr>
+                  <td colspan="2" class="val-right">Descuento (Bs)</td>
+                  <td class="val-right" id="dDescuentoBs"></td>
+                </tr>
+                <tr>
+                  <td style="width:35%;"><span class="lbl">TOTAL A PAGAR (UCD)</span></td>
+                  <td class="val-center"><strong id="dUcd"></strong> &nbsp;|&nbsp; <span class="lbl">TOTAL A PAGAR (Bs)</span></td>
+                  <td class="val-right" id="dTotalBs"></td>
+                </tr>
+              </table>
 
-            <div class="gaceta-box">
-              DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
-            </div>
-
-            <div class="notes-row">
-              <div class="notes-text">
-                - Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.<br/>
-                - El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.<br/>
-                - Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".
+              <div class="gaceta-box">
+                DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
               </div>
-              <div class="pagada-box">
-                <strong>PAGADA</strong>
-                FECHA: <span id="dFechaPagada"></span>
+
+              <div class="notes-row">
+                <div class="notes-text">
+                  - Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.<br/>
+                  - El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.<br/>
+                  - Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".
+                </div>
+                <div class="pagada-box">
+                  <strong>PAGADA</strong>
+                  FECHA: <span id="dFechaPagada"></span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- SECCIÓN / HOJA 2 (EN PANEL VA PEGADA EN LA MISMA HOJA; EN QR VA EN HOJA 2) -->
-        <div class="sheet sheet-page2">
-          <img id="imgWatermark2" class="watermark" alt="" />
-          <div class="sheet-content">
-            <div class="cut-line"></div>
-            <div class="cert-outer">
-              <div class="cert-card">
-                <div class="cert-head">
-                  <div class="cert-head-txt">
-                    REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
-                    ESTADO BOLÍVAR<br/>
-                    ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
-                    SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+          <!-- SECCIÓN / HOJA 2 -->
+          <div class="sheet sheet-page2">
+            <img id="imgWatermark2" class="watermark" alt="" />
+            <div class="sheet-content">
+              <div class="cut-line"></div>
+              <div class="cert-outer">
+                <div class="cert-card">
+                  <div class="cert-head">
+                    <div class="cert-head-txt">
+                      REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
+                      ESTADO BOLÍVAR<br/>
+                      ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
+                      SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+                    </div>
+                    <div id="qrCert"></div>
                   </div>
-                  <div id="qrCert"></div>
+                  <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
+                  <div class="cert-props">
+                    <strong>PROPIETARIO:</strong> <span id="cProp" class="val"></span><br/>
+                    <strong>CONTRIBUYENTE:</strong> <span id="cContrib" class="val"></span>
+                  </div>
+                  <table class="cert-tbl">
+                    <tr>
+                      <td><strong>Placa:</strong><br/><span id="cPlaca" class="val"></span></td>
+                      <td><strong>Marca:</strong><br/><span id="cMarca" class="val"></span></td>
+                      <td colspan="2"><strong>Modelo:</strong><br/><span id="cModelo" class="val"></span></td>
+                    </tr>
+                    <tr>
+                      <td colspan="2"><strong>Tipo de vehículo:</strong><br/><span id="cTipo" class="val"></span></td>
+                      <td><strong>Cilindrada:</strong><br/><span id="cCilindrada" class="val"></span></td>
+                      <td><strong>Año:</strong><br/><span id="cAnio"></span></td>
+                    </tr>
+                    <tr>
+                      <td colspan="2"><strong>Período:</strong> <span id="cPeriodo" class="val"></span></td>
+                      <td colspan="2" class="num-red">N° <span id="cNumero"></span></td>
+                    </tr>
+                  </table>
+                  <div class="cert-foot">
+                    DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
+                  </div>
                 </div>
-                <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
-                <div class="cert-props">
-                  <strong>PROPIETARIO:</strong> <span id="cProp" class="val"></span><br/>
-                  <strong>CONTRIBUYENTE:</strong> <span id="cContrib" class="val"></span>
-                </div>
-                <table class="cert-tbl">
-                  <tr>
-                    <td><strong>Placa:</strong><br/><span id="cPlaca" class="val"></span></td>
-                    <td><strong>Marca:</strong><br/><span id="cMarca" class="val"></span></td>
-                    <td colspan="2"><strong>Modelo:</strong><br/><span id="cModelo" class="val"></span></td>
-                  </tr>
-                  <tr>
-                    <td colspan="2"><strong>Tipo de vehículo:</strong><br/><span id="cTipo" class="val"></span></td>
-                    <td><strong>Cilindrada:</strong><br/><span id="cCilindrada" class="val"></span></td>
-                    <td><strong>Año:</strong><br/><span id="cAnio"></span></td>
-                  </tr>
-                  <tr>
-                    <td colspan="2"><strong>Período:</strong> <span id="cPeriodo" class="val"></span></td>
-                    <td colspan="2" class="num-red">N° <span id="cNumero"></span></td>
-                  </tr>
-                </table>
-                <div class="cert-foot">
-                  DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
-                </div>
-              </div>
 
-              <div class="cert-right">
-                <div class="cert-logo-center">
-                  <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
+                <div class="cert-right">
+                  <div class="cert-logo-center">
+                    <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
+                  </div>
+                  <div class="cert-qr-bottom"><div id="qrBottom"></div></div>
                 </div>
-                <div class="cert-qr-bottom"><div id="qrBottom"></div></div>
               </div>
             </div>
           </div>
@@ -526,7 +524,6 @@
 
     let registros = [];
     let registroActual = null;
-    let adminActivo = false;
 
     function hoyTexto() {
       const d = new Date();
@@ -536,6 +533,24 @@
     function fmtBs(n) {
       return Number(n || 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
+
+    // AJUSTA EL TAMAÑO DE LAS HOJAS AL ANCHO DEL TELÉFONO EN MODO VISOR QR
+    function ajustarEscalaVisor() {
+      const box = document.getElementById("escalaBox");
+      const doc = document.getElementById("documentoPdf");
+      if (!box || !doc) return;
+      if (!document.body.classList.contains("viewer-mode")) {
+        box.style.transform = "";
+        box.style.height = "";
+        return;
+      }
+      const anchoDisp = window.innerWidth - 20;
+      const anchoDoc = doc.offsetWidth || 816;
+      const escala = Math.min(1, anchoDisp / anchoDoc);
+      box.style.transform = `scale(${escala})`;
+      box.style.height = (doc.offsetHeight * escala) + "px";
+    }
+    window.addEventListener("resize", ajustarEscalaVisor);
 
     function crearControlesTasa() {
       const inp = document.getElementById("fTasa");
@@ -547,7 +562,6 @@
       inp.parentNode.appendChild(div);
     }
 
-    // SOLO TASA OFICIAL DEL BANCO CENTRAL DE VENEZUELA (BCV)
     async function actualizarTasaBCV() {
       crearControlesTasa();
       const est = document.getElementById("tasaEstado");
@@ -604,10 +618,11 @@
       renderTablaAdmin();
       await actualizarTasaBCV();
 
-      // MODO VISOR DIRECTO AL ESCANEAR EL QR (?id=...) -> 2 HOJAS + LETRAS LATERALES
+      // SI VIENE DE ESCANEAR UN QR (?id=...) -> DIRECTO AL VISOR DE 2 HOJAS
       const params = new URLSearchParams(window.location.search);
       const idQr = params.get("id");
       if (idQr) {
+        document.getElementById("vistaLogin").classList.add("hidden");
         let encontrado = registros.find(r => r.numero === idQr);
         if (!encontrado && db) {
           try {
@@ -617,12 +632,12 @@
         }
         if (encontrado) {
           document.body.classList.add("viewer-mode");
-          document.getElementById("barraTop").classList.add("hidden");
-          document.getElementById("vistaPublica").classList.add("hidden");
           document.getElementById("barraViewer").classList.remove("hidden");
           mostrarPlanilla(encontrado, true);
         } else {
-          document.getElementById("msgBusqueda").textContent = "No se encontró el certificado N° " + idQr;
+          const err = document.getElementById("msgErrorQr");
+          err.textContent = "No se encontró el documento N° " + idQr;
+          err.classList.remove("hidden");
         }
       }
     }
@@ -683,47 +698,29 @@
     }
 
     // =========================================================================
-    // 4. NAVEGACIÓN, BÚSQUEDA Y PANEL ADMIN
+    // 4. ACCESO AL PANEL ADMIN
     // =========================================================================
-    function mostrarVista(vista) {
-      document.getElementById("vistaPublica").classList.toggle("hidden", vista !== "publica");
-      document.getElementById("vistaAdmin").classList.toggle("hidden", vista !== "admin");
-    }
-
-    function abrirAdmin() {
-      if (!adminActivo) {
-        const pass = prompt("Clave de administrador:");
-        if (pass !== ADMIN_PASS) return alert("Clave incorrecta.");
-        adminActivo = true;
+    function iniciarSesion() {
+      const pass = document.getElementById("inputPass").value.trim();
+      if (pass !== ADMIN_PASS) {
+        document.getElementById("msgLogin").textContent = "Clave incorrecta.";
+        return;
       }
-      mostrarVista("admin");
+      document.getElementById("msgLogin").textContent = "";
+      document.getElementById("inputPass").value = "";
+      document.getElementById("vistaLogin").classList.add("hidden");
+      document.getElementById("barraTop").classList.remove("hidden");
+      document.getElementById("vistaAdmin").classList.remove("hidden");
       nuevoRegistro();
       actualizarTasaBCV();
     }
 
     function cerrarAdmin() {
-      adminActivo = false;
-      mostrarVista("publica");
-    }
-
-    function buscarRegistro() {
-      const q = document.getElementById("inputBuscar").value.trim().toUpperCase();
-      const msg = document.getElementById("msgBusqueda");
-      if (!q) { msg.textContent = "Escribe un número, placa o cédula."; return; }
-      const r = registros.find(x =>
-        (x.numero || "").toUpperCase() === q ||
-        (x.placa || "").toUpperCase() === q ||
-        (x.rif || "").toUpperCase().includes(q) ||
-        (x.ci || "").toUpperCase().includes(q)
-      );
-      if (!r) {
-        msg.textContent = "No se encontró ninguna solvencia con ese dato.";
-        document.getElementById("contenedorHoja").classList.add("hidden");
-        document.getElementById("barraPdf").classList.add("hidden");
-        return;
-      }
-      msg.textContent = "";
-      mostrarPlanilla(r, false);
+      document.getElementById("barraTop").classList.add("hidden");
+      document.getElementById("vistaAdmin").classList.add("hidden");
+      document.getElementById("contenedorHoja").classList.add("hidden");
+      document.getElementById("barraPdf").classList.add("hidden");
+      document.getElementById("vistaLogin").classList.remove("hidden");
     }
 
     // =========================================================================
@@ -845,7 +842,7 @@
     }
 
     // =========================================================================
-    // 6. RENDER (1 HOJA EN PANEL / 2 HOJAS EN VISOR QR) Y DESCARGA PDF
+    // 6. RENDER Y DESCARGA PDF NÍTIDA
     // =========================================================================
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
@@ -888,19 +885,36 @@
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
       document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
+      setTimeout(ajustarEscalaVisor, 50);
     }
 
-    function descargarPDF() {
+    async function descargarPDF() {
       if (!registroActual) return;
+      const box = document.getElementById("escalaBox");
       const el = document.getElementById("documentoPdf");
-      html2pdf().set({
-        margin: 0,
-        filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] }
-      }).from(el).save();
+      const st = document.getElementById("dlStatus");
+      if (st) st.textContent = "Generando PDF...";
+
+      // Quitamos escala temporalmente para que el PDF baje en tamaño carta real
+      const prevTransform = box.style.transform;
+      const prevHeight = box.style.height;
+      box.style.transform = "none";
+      box.style.height = "auto";
+
+      try {
+        await html2pdf().set({
+          margin: 0,
+          filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
+          pagebreak: { mode: ["css", "legacy"] }
+        }).from(el).save();
+      } finally {
+        box.style.transform = prevTransform;
+        box.style.height = prevHeight;
+        if (st) st.textContent = "";
+      }
     }
 
     cargarTodo();
