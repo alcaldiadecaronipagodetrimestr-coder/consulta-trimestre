@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SAT Caroní - Determinación y Solvencia Vehicular</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
@@ -164,7 +165,7 @@
   <div class="container">
     <div id="vistaLogin" class="card login-box no-print">
       <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
-      <input id="inputPass" type="password" autocomplete="off" onkeydown="if(event.key==='Enter') iniciarSesion()" />
+      <input id="inputPass" type="password" value="" autocomplete="off" onkeydown="if(event.key==='Enter') iniciarSesion()" />
       <button type="button" class="btn btn-primary" style="width:100%;" onclick="iniciarSesion()">Entrar</button>
       <div id="msgLogin" style="margin-top:8px; font-size:13px; color:#b91c1c;"></div>
     </div>
@@ -447,7 +448,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    const ADMIN_PASS = "23456";
+    const ADMIN_HASH = "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5";
     const IMAGEN_LOGO_CARONI = "./logo.png";
     const IMAGEN_MARCA_AGUA  = "";
 
@@ -678,15 +679,22 @@
       aplicarImagenes();
     }
 
-    function iniciarSesion() {
+    async function sha256Hex(texto) {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function iniciarSesion() {
       if (esModoQr) return;
-      const pass = document.getElementById("inputPass").value.trim();
-      if (pass !== ADMIN_PASS) {
+      const inp = document.getElementById("inputPass");
+      const pass = inp.value;
+      inp.value = "";
+      const hashIngresado = await sha256Hex(pass);
+      if (hashIngresado !== ADMIN_HASH) {
         document.getElementById("msgLogin").textContent = "Acceso denegado.";
         return;
       }
       document.getElementById("msgLogin").textContent = "";
-      document.getElementById("inputPass").value = "";
       document.getElementById("vistaLogin").classList.add("hidden");
       document.getElementById("barraTop").classList.remove("hidden");
       document.getElementById("vistaAdmin").classList.remove("hidden");
@@ -867,14 +875,60 @@
       setTimeout(ajustarEscalaVisor, 60);
     }
 
-    function descargarPDF() {
+    async function descargarPDF() {
       if (!registroActual) return;
+      const box = document.getElementById("escalaBox");
+      const wrap = document.getElementById("contenedorHoja");
+      const el = document.getElementById("documentoPdf");
       const st = document.getElementById("dlStatus");
-      if (st) st.textContent = "Abriendo PDF...";
-      setTimeout(() => {
-        window.print();
-        if (st) st.textContent = "";
-      }, 150);
+      if (st) st.textContent = "Generando PDF...";
+
+      const prevTransform = box.style.transform;
+      const prevHeight = box.style.height;
+      const prevOverflow = wrap.style.overflow;
+      const prevDisplay = wrap.style.display;
+
+      box.style.transform = "none";
+      box.style.height = "auto";
+      wrap.style.overflow = "visible";
+      wrap.style.display = "block";
+
+      const nombreArchivo = "declaracion_vehiculo_" + registroActual.numero + ".pdf";
+      const worker = html2pdf().set({
+        margin: [2, 2, 2, 2],
+        filename: nombreArchivo,
+        image: { type: "jpeg", quality: 0.96 },
+        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, width: el.scrollWidth },
+        jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] }
+      }).from(el);
+
+      try {
+        const pdfBlob = await worker.outputPdf("blob");
+        const blobUrl = URL.createObjectURL(pdfBlob);
+
+        if (esModoQr) {
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = nombreArchivo;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => {
+            window.location.href = blobUrl;
+          }, 250);
+        } else {
+          await worker.save();
+        }
+      } catch (e) {
+        if (st) st.textContent = "Error al generar PDF";
+      } finally {
+        box.style.transform = prevTransform;
+        box.style.height = prevHeight;
+        wrap.style.overflow = prevOverflow;
+        wrap.style.display = prevDisplay;
+        if (st) setTimeout(() => { st.textContent = ""; }, 1200);
+      }
     }
 
     cargarTodo();
