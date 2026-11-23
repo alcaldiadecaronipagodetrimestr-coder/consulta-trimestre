@@ -60,11 +60,11 @@
 
     body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
     body.viewer-mode .sheet {
-      min-height: 274mm; margin: 0 auto 14px auto;
+      min-height: 270mm; margin: 0 auto 14px auto;
       box-shadow: 0 4px 20px rgba(0,0,0,.45);
     }
-    body.viewer-mode .sheet-page1 { padding: 12mm 11mm 12mm 14mm; page-break-after: always; break-after: page; }
-    body.viewer-mode .sheet-page2 { padding: 14mm 11mm 12mm 11mm; page-break-before: always; break-before: page; }
+    body.viewer-mode .sheet-page1 { padding: 10mm 11mm 10mm 14mm; page-break-after: always; break-after: page; }
+    body.viewer-mode .sheet-page2 { padding: 12mm 11mm 10mm 11mm; }
     body.viewer-mode .cut-line { display: none; }
     body.viewer-mode .side-text {
       display: block; position: absolute; left: 5mm; top: 52%;
@@ -138,41 +138,33 @@
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
     .logo-cert { max-height: 98px; max-width: 210px; object-fit: contain; }
     .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
-
-    @media print {
-      body, body.viewer-mode { background: #fff; }
-      .no-print { display: none !important; }
-      .sheet-wrap { overflow: visible; padding: 0; display: block !important; }
-      #escalaBox { transform: none !important; height: auto !important; }
-      #documentoPdf, .sheet { box-shadow: none; margin: 0; }
-    }
   </style>
 </head>
 <body>
 
-  <div id="barraViewer" class="viewer-bar no-print hidden">
+  <div id="barraViewer" class="viewer-bar hidden">
     <button type="button" onclick="descargarPDF()">
       <span style="font-size:19px;">⬇</span> Download
     </button>
     <span id="dlStatus" class="dl-status"></span>
   </div>
 
-  <div id="barraTop" class="topbar no-print hidden">
+  <div id="barraTop" class="topbar hidden">
     <h1>SAT Caroní — Panel Administrativo</h1>
     <button type="button" class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
   </div>
 
   <div class="container">
-    <div id="vistaLogin" class="card login-box no-print">
+    <div id="vistaLogin" class="card login-box">
       <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
       <input id="inputPass" type="password" value="" autocomplete="off" onkeydown="if(event.key==='Enter') iniciarSesion()" />
       <button type="button" class="btn btn-primary" style="width:100%;" onclick="iniciarSesion()">Entrar</button>
       <div id="msgLogin" style="margin-top:8px; font-size:13px; color:#b91c1c;"></div>
     </div>
 
-    <div id="msgErrorQr" class="card no-print hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
+    <div id="msgErrorQr" class="card hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
 
-    <div id="vistaAdmin" class="card no-print hidden">
+    <div id="vistaAdmin" class="card hidden">
       <div class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
         <h3 style="font-size:14px; color:#0f172a;">Tasa BCV Oficial y Tarifas</h3>
         <div class="grid-form">
@@ -266,9 +258,8 @@
       </div>
     </div>
 
-    <div id="barraPdf" class="toolbar-pdf no-print hidden">
+    <div id="barraPdf" class="toolbar-pdf hidden">
       <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
-      <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
     </div>
 
     <div id="contenedorHoja" class="sheet-wrap hidden">
@@ -448,7 +439,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    const ADMIN_HASH = "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5";
+    const ADMIN_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
     const IMAGEN_LOGO_CARONI = "./logo.png";
     const IMAGEN_MARCA_AGUA  = "";
 
@@ -881,7 +872,7 @@
       const wrap = document.getElementById("contenedorHoja");
       const el = document.getElementById("documentoPdf");
       const st = document.getElementById("dlStatus");
-      if (st) st.textContent = "Generando PDF...";
+      if (st) st.textContent = "Descargando PDF...";
 
       const prevTransform = box.style.transform;
       const prevHeight = box.style.height;
@@ -894,34 +885,18 @@
       wrap.style.display = "block";
 
       const nombreArchivo = "declaracion_vehiculo_" + registroActual.numero + ".pdf";
-      const worker = html2pdf().set({
-        margin: [2, 2, 2, 2],
-        filename: nombreArchivo,
-        image: { type: "jpeg", quality: 0.96 },
-        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, width: el.scrollWidth },
-        jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] }
-      }).from(el);
 
       try {
-        const pdfBlob = await worker.outputPdf("blob");
-        const blobUrl = URL.createObjectURL(pdfBlob);
-
-        if (esModoQr) {
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download = nombreArchivo;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => {
-            window.location.href = blobUrl;
-          }, 250);
-        } else {
-          await worker.save();
-        }
+        await html2pdf().set({
+          margin: [2, 2, 2, 2],
+          filename: nombreArchivo,
+          image: { type: "jpeg", quality: 0.92 },
+          html2canvas: { scale: 1.5, useCORS: true, scrollX: 0, scrollY: 0, width: el.scrollWidth },
+          jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
+          pagebreak: { mode: ["css"] }
+        }).from(el).save();
       } catch (e) {
-        if (st) st.textContent = "Error al generar PDF";
+        if (st) st.textContent = "Error al descargar";
       } finally {
         box.style.transform = prevTransform;
         box.style.height = prevHeight;
