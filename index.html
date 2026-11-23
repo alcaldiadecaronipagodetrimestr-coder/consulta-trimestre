@@ -9,9 +9,22 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
+    body.viewer-mode { background: #202124; }
     .topbar { background: #0a3480; color: #fff; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
     .topbar h1 { font-size: 16px; letter-spacing: .3px; }
     .topbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* BARRA OSCURA TIPO VISOR OFICIAL AL ESCANEAR QR */
+    .viewer-bar {
+      background: #2b2c2f; color: #fff; padding: 12px 18px;
+      display: flex; align-items: center; gap: 10px;
+      position: sticky; top: 0; z-index: 50; border-bottom: 1px solid #3c4043;
+    }
+    .viewer-bar button {
+      background: transparent; border: none; color: #fff; font-size: 15px;
+      display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;
+    }
+
     .btn { border: none; border-radius: 6px; padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer; }
     .btn-primary { background: #0a3480; color: #fff; }
     .btn-light { background: #fff; color: #0a3480; }
@@ -19,6 +32,7 @@
     .btn-danger { background: #b91c1c; color: #fff; }
     .btn-dark { background: #1f2937; color: #fff; }
     .container { max-width: 960px; margin: 18px auto; padding: 0 12px; }
+    body.viewer-mode .container { max-width: 100%; margin: 14px auto; }
     .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,.08); margin-bottom: 18px; }
     .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .search-row input { flex: 1; min-width: 220px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
@@ -34,13 +48,25 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
-    /* HOJA OFICIAL CARTA */
-    .sheet-wrap { overflow-x: auto; padding-bottom: 20px; }
+    /* DOS HOJAS BLANCAS SEPARADAS (TAMAÑO CARTA) */
+    .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
     .sheet {
-      width: 215.9mm; min-height: 279.4mm; margin: 0 auto; background: #fff;
-      padding: 9mm 11mm; position: relative; color: #000;
-      box-shadow: 0 4px 20px rgba(0,0,0,.18); overflow: hidden;
+      width: 215.9mm; min-height: 279.4mm; margin: 0 auto 16px auto; background: #fff;
+      padding: 12mm 11mm 15mm 14mm; position: relative; color: #000;
+      box-shadow: 0 4px 20px rgba(0,0,0,.35); overflow: hidden;
     }
+    .sheet-page1 { page-break-after: always; }
+    .sheet-page2 { padding-top: 14mm; }
+
+    /* LETRAS VERTICALES EN EL BORDE IZQUIERDO DE LA HOJA 1 */
+    .side-text {
+      position: absolute; left: 5mm; top: 52%;
+      transform: translateY(-50%) rotate(-90deg);
+      transform-origin: left center;
+      font-size: 7.2px; color: #222; white-space: nowrap;
+      letter-spacing: 0.2px; z-index: 2;
+    }
+
     .watermark {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       opacity: 0.08; pointer-events: none; z-index: 0; max-width: 65%; display: none;
@@ -48,21 +74,25 @@
     .sheet-content { position: relative; z-index: 1; }
 
     /* ENCABEZADO 3 COLUMNAS CON QR EN TODO EL CENTRO */
-    .doc-header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .doc-header-left { font-size: 8.5px; font-weight: bold; line-height: 1.45; }
+    .doc-header {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      gap: 8px; min-height: 23mm; margin-bottom: 8mm;
+    }
+    .doc-header-left { font-size: 8.8px; font-weight: bold; line-height: 1.5; }
     .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
-    .logo-top { max-height: 58px; max-width: 155px; object-fit: contain; }
+    .logo-top { max-height: 66px; max-width: 170px; object-fit: contain; }
 
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
-      text-align: center; font-weight: bold; font-size: 11.5px; padding: 5px; margin-bottom: 6px;
+      text-align: center; font-weight: bold; font-size: 13px;
+      padding: 11px 6px; margin-bottom: 8px;
     }
-    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9px; }
-    .meta-table td, .data-table td { border: 1px solid #000; padding: 3.5px 6px; vertical-align: middle; }
+    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 7px; font-size: 9.5px; }
+    .meta-table td, .data-table td { border: 1px solid #000; padding: 5.5px 6px; vertical-align: middle; }
     .bar-blue {
       background: #0a3480; color: #fff; text-align: center; font-weight: bold;
-      font-size: 9.5px; padding: 3.5px; border-radius: 6px; margin: 6px 0 4px;
+      font-size: 10px; padding: 6px 4px; border-radius: 6px; margin: 7px 0 5px;
       letter-spacing: .3px;
     }
     .lbl { font-weight: bold; white-space: nowrap; }
@@ -72,47 +102,57 @@
 
     .gaceta-box {
       border: 1px solid #999; background: #f3f4f6; text-align: center;
-      font-size: 8px; padding: 5px; margin: 8px 0;
+      font-size: 8.3px; padding: 7px; margin: 10px 0;
     }
-    .notes-row { display: grid; grid-template-columns: 1fr 145px; gap: 12px; align-items: center; margin: 6px 0 10px; }
-    .notes-text { font-size: 8px; font-style: italic; line-height: 1.45; }
+    .notes-row { display: grid; grid-template-columns: 1fr 186px; gap: 12px; align-items: center; margin-top: 10px; }
+    .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; }
     .pagada-box {
-      border: 1.5px dashed #000; text-align: center; padding: 10px 6px;
+      border: 1.5px dashed #000; text-align: center; padding: 12px 10px;
       font-size: 9.5px; line-height: 1.6;
     }
-    .pagada-box strong { display: block; font-size: 10.5px; }
+    .pagada-box strong { display: block; font-size: 11px; }
 
-    .cut-line { border-top: 1.5px dashed #444; margin: 8px 0 10px; }
-
-    /* CERTIFICADO INFERIOR */
-    .cert-outer { border: 1.5px dashed #444; padding: 8px; display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 10px; align-items: stretch; }
-    .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 7px; font-size: 8px; position: relative; }
+    /* HOJA 2: SOLO EL CARNET MITAD Y MITAD */
+    .cert-outer {
+      border: 1.5px dashed #444; padding: 10px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch;
+    }
+    .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 8px; font-size: 8px; position: relative; }
     .cert-head { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 4px; margin-bottom: 4px; }
-    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.3px; line-height: 1.3; }
-    .cert-title { text-align: center; font-weight: bold; font-size: 8.5px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
+    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.2px; line-height: 1.3; }
+    .cert-title { text-align: center; font-weight: bold; font-size: 8.3px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
     .cert-props { border: 1px solid #000; border-radius: 5px; padding: 4px 6px; margin-bottom: 4px; line-height: 1.4; font-size: 7.8px; }
     .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.8px; }
-    .cert-tbl td { border: 1px solid #000; padding: 2.5px 4px; }
+    .cert-tbl td { border: 1px solid #000; padding: 3px 4px; }
     .num-red { color: #c00; font-weight: bold; font-size: 9.5px; text-align: center; }
-    .cert-foot { text-align: center; font-size: 6.5px; margin-top: 5px; line-height: 1.25; }
+    .cert-foot { text-align: center; font-size: 6.4px; margin-top: 5px; line-height: 1.25; }
 
-    /* LOGO EN TODO EL MEDIO DEL PEDAZO DERECHO + QR ABAJO */
-    .cert-right { display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 4px 0; }
-    .cert-logo-center { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; }
-    .logo-cert { max-height: 75px; max-width: 175px; object-fit: contain; }
-    .cert-qr-bottom { width: 100%; display: flex; justify-content: flex-end; align-items: flex-end; margin-top: 6px; }
+    .cert-right {
+      position: relative; display: flex; justify-content: center; align-items: center;
+      min-height: 50mm; width: 100%;
+    }
+    .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+    .logo-cert { max-height: 84px; max-width: 175px; object-fit: contain; }
+    .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
 
     @media print {
-      body { background: #fff; }
+      body, body.viewer-mode { background: #fff; }
       .no-print { display: none !important; }
       .sheet-wrap { overflow: visible; padding: 0; }
-      .sheet { box-shadow: none; margin: 0; width: 100%; min-height: auto; page-break-after: avoid; }
+      .sheet { box-shadow: none; margin: 0; width: 215.9mm; min-height: 279.4mm; }
     }
   </style>
 </head>
 <body>
 
-  <div class="topbar no-print">
+  <!-- BARRA OSCURA DE DESCARGA (SOLO AL ESCANEAR QR) -->
+  <div id="barraViewer" class="viewer-bar no-print hidden">
+    <button onclick="descargarPDF()">
+      <span style="font-size:18px;">⬇</span> Download
+    </button>
+  </div>
+
+  <div id="barraTop" class="topbar no-print">
     <h1>SAT Caroní — Portal de Verificación Vehicular</h1>
     <div class="actions">
       <button class="btn btn-light" onclick="mostrarVista('publica')">Consultar</button>
@@ -139,12 +179,11 @@
         <button class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
       </div>
 
-      <!-- TARIFAS Y TASA BCV -->
       <div class="admin-section">
         <h3 style="font-size:14px; color:#0f172a;">Tasa del Dólar y Tarifas (Solo visible aquí)</h3>
         <div class="grid-form">
           <div class="field">
-            <label>Tasa BCV (Bs por $ / UCD)</label>
+            <label>Tasa del Dólar (Bs por $ / UCD)</label>
             <input id="fTasa" type="number" step="0.0001" value="838.0655" oninput="recalcularMontos()" />
           </div>
           <div class="field">
@@ -171,7 +210,6 @@
         </div>
       </div>
 
-      <!-- FORMULARIO DE DATOS -->
       <div class="admin-section">
         <h3 style="font-size:14px; color:#0f172a;">Datos de la Planilla y Carnet</h3>
         <div class="grid-form">
@@ -211,7 +249,6 @@
         </div>
       </div>
 
-      <!-- GESTOR DE IMÁGENES -->
       <div class="admin-section">
         <h3 style="font-size:14px; color:#0f172a;">Imágenes (Logo Caroní y Marca de Agua)</h3>
         <div class="grid-form">
@@ -224,9 +261,8 @@
         </div>
       </div>
 
-      <!-- LISTADO -->
       <div class="admin-section">
-        <h3 style="font-size:14px; color:#0f172a;">Registros Guardados</h3>
+        <h3 style="font-size:14px; color:#0f172a;">Registros Guardados en la Nube</h3>
         <div style="overflow-x:auto;">
           <table class="records-table">
             <thead><tr><th>N°</th><th>Contribuyente</th><th>Placa</th><th>Total Bs</th><th>Acciones</th></tr></thead>
@@ -236,193 +272,198 @@
       </div>
     </div>
 
-    <!-- BOTONES DE PDF -->
+    <!-- BOTONES DE PDF (VISTA NORMAL) -->
     <div id="barraPdf" class="toolbar-pdf no-print hidden">
-      <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
-      <button class="btn btn-primary" onclick="window.print()">Imprimir Hoja</button>
+      <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF (2 Hojas)</button>
+      <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
     </div>
 
-    <!-- HOJA OFICIAL -->
+    <!-- CONTENEDOR DE LAS 2 HOJAS OFICIALES -->
     <div id="contenedorHoja" class="sheet-wrap hidden">
-      <div id="hojaOficial" class="sheet">
-        <img id="imgWatermark" class="watermark" alt="" />
-        <div class="sheet-content">
-          <div class="doc-header">
-            <div class="doc-header-left">
-              REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
-              ESTADO BOLÍVAR<br/>
-              ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
-              SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+      <div id="documentoPdf">
+        <!-- HOJA 1: DETERMINACIÓN DE IMPUESTO -->
+        <div class="sheet sheet-page1">
+          <div class="side-text">Escanee el código QR y será dirigido a la página web oficial para verificar la autenticidad de este documento.</div>
+          <img id="imgWatermark1" class="watermark" alt="" />
+          <div class="sheet-content">
+            <div class="doc-header">
+              <div class="doc-header-left">
+                REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
+                ESTADO BOLÍVAR<br/>
+                ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
+                SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+              </div>
+              <div class="doc-header-center"><div id="qrTop"></div></div>
+              <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
             </div>
-            <div class="doc-header-center"><div id="qrTop"></div></div>
-            <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
-          </div>
 
-          <div class="title-box">DETERMINACIÓN DE IMPUESTO SOBRE VEHÍCULOS</div>
+            <div class="title-box">DETERMINACIÓN DE IMPUESTO SOBRE VEHÍCULOS</div>
 
-          <table class="meta-table">
-            <tr>
-              <td class="lbl">Determinación de impuesto</td>
-              <td><span class="lbl">Período:</span> <span id="dPeriodo" class="val"></span></td>
-              <td><span class="lbl">Fecha:</span> <span id="dFecha"></span></td>
-              <td class="val-center"><span class="lbl">N°</span> <span id="dNumero"></span></td>
-            </tr>
-          </table>
+            <table class="meta-table">
+              <tr>
+                <td class="lbl">Determinación de impuesto</td>
+                <td><span class="lbl">Período:</span> <span id="dPeriodo" class="val"></span></td>
+                <td><span class="lbl">Fecha:</span> <span id="dFecha"></span></td>
+                <td class="val-center"><span class="lbl">N°</span> <span id="dNumero"></span></td>
+              </tr>
+            </table>
 
-          <div class="bar-blue">DATOS DEL CONTRIBUYENTE</div>
-          <table class="data-table">
-            <tr>
-              <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dRif" class="val"></span></td>
-              <td colspan="2"><span class="lbl">Nombre o razón social:</span> <span id="dNombre" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="2"><span class="lbl">Representante legal:</span> <span id="dRep" class="val"></span></td>
-              <td style="width:26%;"><span class="lbl">C.I.:</span> <span id="dCi" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="3"><span class="lbl">Domicilio fiscal:</span> <span id="dDomicilio" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="2"><span class="lbl">Estado:</span> <span id="dEstado" class="val"></span></td>
-              <td><span class="lbl">Municipio:</span> <span id="dMunicipio" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="2"><span class="lbl">Parroquia:</span> <span id="dParroquia" class="val"></span></td>
-              <td><span class="lbl">Sector:</span> <span id="dSector" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="2"><span class="lbl">Teléfonos:</span> <span id="dTel"></span></td>
-              <td><span class="lbl">Correo electrónico:</span> <span id="dCorreo"></span></td>
-            </tr>
-          </table>
+            <div class="bar-blue">DATOS DEL CONTRIBUYENTE</div>
+            <table class="data-table">
+              <tr>
+                <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dRif" class="val"></span></td>
+                <td colspan="2"><span class="lbl">Nombre o razón social:</span> <span id="dNombre" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="2"><span class="lbl">Representante legal:</span> <span id="dRep" class="val"></span></td>
+                <td style="width:26%;"><span class="lbl">C.I.:</span> <span id="dCi" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="3"><span class="lbl">Domicilio fiscal:</span> <span id="dDomicilio" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="2"><span class="lbl">Estado:</span> <span id="dEstado" class="val"></span></td>
+                <td><span class="lbl">Municipio:</span> <span id="dMunicipio" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="2"><span class="lbl">Parroquia:</span> <span id="dParroquia" class="val"></span></td>
+                <td><span class="lbl">Sector:</span> <span id="dSector" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="2"><span class="lbl">Teléfonos:</span> <span id="dTel"></span></td>
+                <td><span class="lbl">Correo electrónico:</span> <span id="dCorreo"></span></td>
+              </tr>
+            </table>
 
-          <div class="bar-blue">DATOS DEL VEHÍCULO</div>
-          <table class="data-table">
-            <tr>
-              <td colspan="3"><span class="lbl">Tipo de vehículo:</span> <span id="dTipo" class="val"></span></td>
-              <td colspan="3"><span class="lbl">Placa / Serial de Carrocería:</span> <span id="dSerial" class="val"></span></td>
-            </tr>
-            <tr>
-              <td colspan="2"><span class="lbl">Marca:</span> <span id="dMarca" class="val"></span></td>
-              <td><span class="lbl">Año:</span> <span id="dAnio"></span></td>
-              <td colspan="3"><span class="lbl">Modelo:</span> <span id="dModelo" class="val"></span></td>
-            </tr>
-            <tr>
-              <td><span class="lbl">Watts:</span> <span id="dWatts" class="val"></span></td>
-              <td><span class="lbl">Peso / Carga:</span> <span id="dPeso" class="val"></span></td>
-              <td><span class="lbl">Puestos:</span> <span id="dPuestos" class="val"></span></td>
-              <td><span class="lbl">Ejes:</span> <span id="dEjes" class="val"></span></td>
-              <td><span class="lbl">Capacidad Carga:</span> <span id="dCapacidad" class="val"></span></td>
-              <td><span class="lbl">Cilindrada:</span> <span id="dCilindrada" class="val"></span></td>
-            </tr>
-          </table>
+            <div class="bar-blue">DATOS DEL VEHÍCULO</div>
+            <table class="data-table">
+              <tr>
+                <td colspan="3"><span class="lbl">Tipo de vehículo:</span> <span id="dTipo" class="val"></span></td>
+                <td colspan="3"><span class="lbl">Placa / Serial de Carrocería:</span> <span id="dSerial" class="val"></span></td>
+              </tr>
+              <tr>
+                <td colspan="2"><span class="lbl">Marca:</span> <span id="dMarca" class="val"></span></td>
+                <td><span class="lbl">Año:</span> <span id="dAnio"></span></td>
+                <td colspan="3"><span class="lbl">Modelo:</span> <span id="dModelo" class="val"></span></td>
+              </tr>
+              <tr>
+                <td><span class="lbl">Watts:</span> <span id="dWatts" class="val"></span></td>
+                <td><span class="lbl">Peso / Carga:</span> <span id="dPeso" class="val"></span></td>
+                <td><span class="lbl">Puestos:</span> <span id="dPuestos" class="val"></span></td>
+                <td><span class="lbl">Ejes:</span> <span id="dEjes" class="val"></span></td>
+                <td><span class="lbl">Capacidad Carga:</span> <span id="dCapacidad" class="val"></span></td>
+                <td><span class="lbl">Cilindrada:</span> <span id="dCilindrada" class="val"></span></td>
+              </tr>
+            </table>
 
-          <div class="bar-blue">DATOS DEL PROPIETARIO</div>
-          <table class="data-table">
-            <tr>
-              <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dPropRif" class="val"></span></td>
-              <td><span class="lbl">Nombre o razón social:</span> <span id="dPropNombre" class="val"></span></td>
-            </tr>
-          </table>
+            <div class="bar-blue">DATOS DEL PROPIETARIO</div>
+            <table class="data-table">
+              <tr>
+                <td style="width:28%;"><span class="lbl">RIF:</span> <span id="dPropRif" class="val"></span></td>
+                <td><span class="lbl">Nombre o razón social:</span> <span id="dPropNombre" class="val"></span></td>
+              </tr>
+            </table>
 
-          <div class="bar-blue">DATOS DE LA DETERMINACIÓN</div>
-          <table class="data-table">
-            <tr>
-              <td colspan="2" class="val-right">Impuesto (Bs)</td>
-              <td style="width:22%;" class="val-right" id="dImpuestoBs"></td>
-            </tr>
-            <tr>
-              <td colspan="2" class="val-right">Descuento (Bs)</td>
-              <td class="val-right" id="dDescuentoBs"></td>
-            </tr>
-            <tr>
-              <td style="width:35%;"><span class="lbl">TOTAL A PAGAR (UCD)</span></td>
-              <td class="val-center"><strong id="dUcd"></strong> &nbsp;|&nbsp; <span class="lbl">TOTAL A PAGAR (Bs)</span></td>
-              <td class="val-right" id="dTotalBs"></td>
-            </tr>
-          </table>
+            <div class="bar-blue">DATOS DE LA DETERMINACIÓN</div>
+            <table class="data-table">
+              <tr>
+                <td colspan="2" class="val-right">Impuesto (Bs)</td>
+                <td style="width:22%;" class="val-right" id="dImpuestoBs"></td>
+              </tr>
+              <tr>
+                <td colspan="2" class="val-right">Descuento (Bs)</td>
+                <td class="val-right" id="dDescuentoBs"></td>
+              </tr>
+              <tr>
+                <td style="width:35%;"><span class="lbl">TOTAL A PAGAR (UCD)</span></td>
+                <td class="val-center"><strong id="dUcd"></strong> &nbsp;|&nbsp; <span class="lbl">TOTAL A PAGAR (Bs)</span></td>
+                <td class="val-right" id="dTotalBs"></td>
+              </tr>
+            </table>
 
-          <div class="gaceta-box">
-            DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
-          </div>
-
-          <div class="notes-row">
-            <div class="notes-text">
-              - Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.<br/>
-              - El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.<br/>
-              - Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".
+            <div class="gaceta-box">
+              DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
             </div>
-            <div class="pagada-box">
-              <strong>PAGADA</strong>
-              FECHA: <span id="dFechaPagada"></span>
+
+            <div class="notes-row">
+              <div class="notes-text">
+                - Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.<br/>
+                - El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.<br/>
+                - Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".
+              </div>
+              <div class="pagada-box">
+                <strong>PAGADA</strong>
+                FECHA: <span id="dFechaPagada"></span>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="cut-line"></div>
-
-          <div class="cert-outer">
-            <div class="cert-card">
-              <div class="cert-head">
-                <div class="cert-head-txt">
-                  REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
-                  ESTADO BOLÍVAR<br/>
-                  ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
-                  SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+        <!-- HOJA 2: SOLO EL CARNET -->
+        <div class="sheet sheet-page2">
+          <img id="imgWatermark2" class="watermark" alt="" />
+          <div class="sheet-content">
+            <div class="cert-outer">
+              <div class="cert-card">
+                <div class="cert-head">
+                  <div class="cert-head-txt">
+                    REPÚBLICA BOLIVARIANA DE VENEZUELA<br/>
+                    ESTADO BOLÍVAR<br/>
+                    ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
+                    SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
+                  </div>
+                  <div id="qrCert"></div>
                 </div>
-                <div id="qrCert"></div>
+                <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
+                <div class="cert-props">
+                  <strong>PROPIETARIO:</strong> <span id="cProp" class="val"></span><br/>
+                  <strong>CONTRIBUYENTE:</strong> <span id="cContrib" class="val"></span>
+                </div>
+                <table class="cert-tbl">
+                  <tr>
+                    <td><strong>Placa:</strong><br/><span id="cPlaca" class="val"></span></td>
+                    <td><strong>Marca:</strong><br/><span id="cMarca" class="val"></span></td>
+                    <td colspan="2"><strong>Modelo:</strong><br/><span id="cModelo" class="val"></span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><strong>Tipo de vehículo:</strong><br/><span id="cTipo" class="val"></span></td>
+                    <td><strong>Cilindrada:</strong><br/><span id="cCilindrada" class="val"></span></td>
+                    <td><strong>Año:</strong><br/><span id="cAnio"></span></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><strong>Período:</strong> <span id="cPeriodo" class="val"></span></td>
+                    <td colspan="2" class="num-red">N° <span id="cNumero"></span></td>
+                  </tr>
+                </table>
+                <div class="cert-foot">
+                  DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
+                </div>
               </div>
-              <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
-              <div class="cert-props">
-                <strong>PROPIETARIO:</strong> <span id="cProp" class="val"></span><br/>
-                <strong>CONTRIBUYENTE:</strong> <span id="cContrib" class="val"></span>
-              </div>
-              <table class="cert-tbl">
-                <tr>
-                  <td><strong>Placa:</strong><br/><span id="cPlaca" class="val"></span></td>
-                  <td><strong>Marca:</strong><br/><span id="cMarca" class="val"></span></td>
-                  <td colspan="2"><strong>Modelo:</strong><br/><span id="cModelo" class="val"></span></td>
-                </tr>
-                <tr>
-                  <td colspan="2"><strong>Tipo de vehículo:</strong><br/><span id="cTipo" class="val"></span></td>
-                  <td><strong>Cilindrada:</strong><br/><span id="cCilindrada" class="val"></span></td>
-                  <td><strong>Año:</strong><br/><span id="cAnio"></span></td>
-                </tr>
-                <tr>
-                  <td colspan="2"><strong>Período:</strong> <span id="cPeriodo" class="val"></span></td>
-                  <td colspan="2" class="num-red">N° <span id="cNumero"></span></td>
-                </tr>
-              </table>
-              <div class="cert-foot">
-                DETERMINACIÓN DE IMPUESTOS SEGÚN ORDENANZA DE IMPUESTO SOBRE VEHÍCULOS, GACETA MUNICIPAL ORDINARIA NRO.N°176/2023, DE FECHA 08/11/2023.
-              </div>
-            </div>
 
-            <div class="cert-right">
-              <div class="cert-logo-center">
-                <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
+              <div class="cert-right">
+                <div class="cert-logo-center">
+                  <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
+                </div>
+                <div class="cert-qr-bottom"><div id="qrBottom"></div></div>
               </div>
-              <div class="cert-qr-bottom"><div id="qrBottom"></div></div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-<!-- FIREBASE COMPAT (OPCIONAL: PEGA TUS CLAVES ABAJO PARA NUBE EN TIEMPO REAL) -->
+<!-- FIREBASE COMPAT (NUBE EN TIEMPO REAL) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
     // =========================================================================
-    // 1. CONFIGURACIÓN RÁPIDA (IMÁGENES, CLAVE ADMIN Y FIREBASE)
+    // 1. CONFIGURACIÓN RÁPIDA (CLAVE, IMÁGENES Y TU NUBE DE FIREBASE)
     // =========================================================================
-    const ADMIN_PASS = "admin2026";
-
-    // Si subes tus imágenes al mismo repositorio de GitHub Pages, pon aquí el nombre:
-    // Ejemplo: const IMAGEN_LOGO_CARONI = "logo-caroni.png";
+    const ADMIN_PASS = "23456";
     const IMAGEN_LOGO_CARONI = "";
     const IMAGEN_MARCA_AGUA  = "";
 
-    // Pega aquí tu firebaseConfig cuando lo conectes a Firebase:
+    // PEGA AQUÍ LAS CLAVES DE TU PROYECTO EN FIREBASE CONSOLE:
     const GITHUB_FIREBASE_CONFIG = {
       apiKey: "",
       authDomain: "",
@@ -432,13 +473,13 @@
       appId: ""
     };
 
-    // Logo SVG de respaldo por si no has subido tu PNG todavía
     const LOGO_SVG_DEFAULT = "data:image/svg+xml;utf8," + encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 110">
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 122">
         <circle cx="130" cy="36" r="24" fill="none" stroke="#0a3480" stroke-width="5" stroke-dasharray="10 4"/>
         <polygon points="130,18 135,32 149,32 138,40 142,53 130,45 118,53 122,40 111,32 125,32" fill="#d97706"/>
         <text x="130" y="84" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="30" fill="#0a3480">CARONÍ</text>
-        <text x="130" y="99" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#b91c1c">ALCALDÍA BOLIVARIANA</text>
+        <text x="130" y="99" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="bold" fill="#b91c1c">ALCALDÍA BOLIVARIANA</text>
+        <text x="130" y="113" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="bold" fill="#111111">INNOVACIÓN Y TRANSFORMACIÓN</text>
       </svg>`
     );
 
@@ -449,10 +490,11 @@
     }
 
     // =========================================================================
-    // 2. DATOS INICIALES Y ALMACENAMIENTO
+    // 2. DATOS INICIALES, TASA AUTOMÁTICA Y NUBE COMPLETA
     // =========================================================================
     const STORAGE_KEY = "sat_caroni_registros_v2";
     const ASSETS_KEY  = "sat_caroni_assets_v2";
+    const TASA_KEY    = "sat_caroni_tasa_v2";
 
     const REGISTROS_INICIALES = [
       {
@@ -482,6 +524,52 @@
       return Number(n || 0).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function crearControlesTasa() {
+      const inp = document.getElementById("fTasa");
+      if (!inp || document.getElementById("tasaEstado")) return;
+      const div = document.createElement("div");
+      div.style.cssText = "margin-top:4px;font-size:11px;display:flex;justify-content:space-between;align-items:center;gap:4px;";
+      div.innerHTML = `<span id="tasaEstado" style="color:#0a3480;">Buscando tasa...</span>
+        <button type="button" onclick="actualizarTasaDolar()" style="border:none;background:#0a3480;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">↻ Actualizar</button>`;
+      inp.parentNode.appendChild(div);
+    }
+
+    async function actualizarTasaDolar() {
+      crearControlesTasa();
+      const est = document.getElementById("tasaEstado");
+      if (est) est.textContent = "Actualizando tasa...";
+      try {
+        let res = await fetch("https://ve.dolarapi.com/v1/dolares/paralelo");
+        let data = res.ok ? await res.json() : null;
+        if (!data || !data.promedio) {
+          res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+          data = res.ok ? await res.json() : null;
+        }
+        if (data && data.promedio) {
+          const valor = Number(data.promedio).toFixed(4);
+          document.getElementById("fTasa").value = valor;
+          localStorage.setItem(TASA_KEY, JSON.stringify({ valor, fecha: hoyTexto() }));
+          if (est) est.textContent = `Tasa hoy: Bs. ${valor}`;
+          recalcularMontos();
+          const spanTasa = document.getElementById("dTasa");
+          if (spanTasa) spanTasa.textContent = valor;
+          return;
+        }
+        throw new Error("Sin respuesta");
+      } catch (e) {
+        const guardada = JSON.parse(localStorage.getItem(TASA_KEY) || "null");
+        if (guardada && guardada.valor) {
+          document.getElementById("fTasa").value = guardada.valor;
+          if (est) est.textContent = `Última guardada (${guardada.fecha})`;
+          const spanTasa = document.getElementById("dTasa");
+          if (spanTasa) spanTasa.textContent = guardada.valor;
+        } else if (est) {
+          est.textContent = "Tasa manual (sin conexión)";
+        }
+        recalcularMontos();
+      }
+    }
+
     async function cargarTodo() {
       const local = localStorage.getItem(STORAGE_KEY);
       registros = local ? JSON.parse(local) : [...REGISTROS_INICIALES];
@@ -494,18 +582,32 @@
             registros = snap.docs.map(d => d.data());
             localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
           }
-        } catch (e) { console.warn("Usando almacenamiento local:", e); }
+          const cfg = await db.collection("config").doc("assets").get();
+          if (cfg.exists) localStorage.setItem(ASSETS_KEY, JSON.stringify(cfg.data()));
+        } catch (e) { console.warn("Error leyendo nube:", e); }
       }
+
       aplicarImagenes();
       renderTablaAdmin();
+      actualizarTasaDolar();
 
-      // Si viene desde un código QR (?id=0000152543), abre directo su planilla
+      // MODO VISOR DIRECTO AL ESCANEAR EL QR (?id=...)
       const params = new URLSearchParams(window.location.search);
       const idQr = params.get("id");
       if (idQr) {
-        const encontrado = registros.find(r => r.numero === idQr);
+        let encontrado = registros.find(r => r.numero === idQr);
+        if (!encontrado && db) {
+          try {
+            const doc = await db.collection("solvencias").doc(idQr).get();
+            if (doc.exists) encontrado = doc.data();
+          } catch (e) {}
+        }
         if (encontrado) {
-          mostrarPlanilla(encontrado);
+          document.body.classList.add("viewer-mode");
+          document.getElementById("barraTop").classList.add("hidden");
+          document.getElementById("vistaPublica").classList.add("hidden");
+          document.getElementById("barraViewer").classList.remove("hidden");
+          mostrarPlanilla(encontrado, true);
         } else {
           document.getElementById("msgBusqueda").textContent = "No se encontró el certificado N° " + idQr;
         }
@@ -513,7 +615,7 @@
     }
 
     // =========================================================================
-    // 3. IMÁGENES (LOGO Y MARCA DE AGUA)
+    // 3. IMÁGENES (LOGO Y MARCA DE AGUA EN AMBAS HOJAS)
     // =========================================================================
     function getAssets() {
       const saved = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
@@ -528,16 +630,23 @@
       const a = getAssets();
       document.getElementById("imgLogoTop").src = a.logo;
       document.getElementById("imgLogoCert").src = a.logo;
-      const wm = document.getElementById("imgWatermark");
-      if (a.watermark) {
-        wm.src = a.watermark;
-        wm.style.display = "block";
-        wm.style.opacity = (a.opacity / 100).toString();
-      } else {
-        wm.style.display = "none";
-      }
+      ["imgWatermark1", "imgWatermark2"].forEach(id => {
+        const wm = document.getElementById(id);
+        if (a.watermark) {
+          wm.src = a.watermark;
+          wm.style.display = "block";
+          wm.style.opacity = (a.opacity / 100).toString();
+        } else {
+          wm.style.display = "none";
+        }
+      });
       document.getElementById("fOpacidad").value = a.opacity;
       document.getElementById("lblOp").textContent = a.opacity;
+    }
+
+    async function guardarAssetsNube(a) {
+      localStorage.setItem(ASSETS_KEY, JSON.stringify(a));
+      if (db) { try { await db.collection("config").doc("assets").set(a); } catch (e) {} }
     }
 
     function subirImagen(ev, tipo) {
@@ -547,7 +656,7 @@
       reader.onload = () => {
         const a = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
         a[tipo] = reader.result;
-        localStorage.setItem(ASSETS_KEY, JSON.stringify(a));
+        guardarAssetsNube(a);
         aplicarImagenes();
       };
       reader.readAsDataURL(file);
@@ -556,7 +665,7 @@
     function cambiarOpacidad(val) {
       const a = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
       a.opacity = Number(val);
-      localStorage.setItem(ASSETS_KEY, JSON.stringify(a));
+      guardarAssetsNube(a);
       aplicarImagenes();
     }
 
@@ -576,6 +685,7 @@
       }
       mostrarVista("admin");
       nuevoRegistro();
+      actualizarTasaDolar();
     }
 
     function cerrarAdmin() {
@@ -600,11 +710,11 @@
         return;
       }
       msg.textContent = "";
-      mostrarPlanilla(r);
+      mostrarPlanilla(r, false);
     }
 
     // =========================================================================
-    // 5. CORRELATIVO, TARIFAS EN BS Y CRUD
+    // 5. CORRELATIVO INFINITO, TARIFAS EN BS Y GUARDADO EN NUBE
     // =========================================================================
     function siguienteCorrelativo() {
       if (!registros.length) return "0000152544";
@@ -684,8 +794,9 @@
       if (db) { try { await db.collection("solvencias").doc(numero).set(reg); } catch (e) {} }
 
       renderTablaAdmin();
-      mostrarPlanilla(reg);
-      alert("Planilla N° " + numero + " guardada.");
+      mostrarPlanilla(reg, false);
+      document.getElementById("fNumero").value = siguienteCorrelativo();
+      alert("Planilla N° " + numero + " guardada en la nube.");
     }
 
     function renderTablaAdmin() {
@@ -707,7 +818,7 @@
 
     function verPorNumero(num) {
       const r = registros.find(x => x.numero === num);
-      if (r) mostrarPlanilla(r);
+      if (r) mostrarPlanilla(r, false);
     }
 
     async function eliminarRegistro(num) {
@@ -719,7 +830,7 @@
     }
 
     // =========================================================================
-    // 6. RENDER DE LA HOJA, QR Y DESCARGA PDF
+    // 6. RENDER DE LAS 2 HOJAS, QR Y DESCARGA PDF
     // =========================================================================
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
@@ -727,7 +838,7 @@
       new QRCode(el, { text: texto, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
     }
 
-    function mostrarPlanilla(r) {
+    function mostrarPlanilla(r, modoVisor) {
       registroActual = r;
       const impBs = (r.ucd || 0) * (r.tasa || 0);
       const descBs = r.descuento || 0;
@@ -744,35 +855,37 @@
       set("dPropRif", r.propRif || r.rif); set("dPropNombre", r.propNombre || r.nombre);
       set("dImpuestoBs", fmtBs(impBs)); set("dDescuentoBs", fmtBs(descBs));
       set("dUcd", fmtBs(r.ucd)); set("dTotalBs", fmtBs(totalBs));
-      set("dTasa", r.tasa); set("dFechaPagada", r.fecha);
 
-      // Carnet inferior
+      const tasaMostrar = document.getElementById("fTasa").value || r.tasa;
+      set("dTasa", tasaMostrar);
+      set("dFechaPagada", r.fecha);
+
       set("cProp", (r.propNombre || r.nombre) + " / " + (r.propRif || r.rif));
       set("cContrib", r.nombre + " / " + r.rif);
       set("cPlaca", r.placa || r.serial); set("cMarca", r.marca); set("cModelo", r.modelo);
       set("cTipo", r.tipo); set("cCilindrada", r.cilindrada); set("cAnio", r.anio);
       set("cPeriodo", r.periodo); set("cNumero", r.numero);
 
-      // URL directa al PDF/planilla de la persona al escanear el QR
-      const baseUrl = window.location.origin + window.location.pathname;
+      const baseUrl = window.location.href.split("?")[0];
       const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero);
       generarQR("qrTop", urlPersona, 64);
       generarQR("qrCert", urlPersona, 44);
       generarQR("qrBottom", urlPersona, 68);
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
-      document.getElementById("barraPdf").classList.remove("hidden");
+      document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
     }
 
     function descargarPDF() {
       if (!registroActual) return;
-      const el = document.getElementById("hojaOficial");
+      const el = document.getElementById("documentoPdf");
       html2pdf().set({
         margin: 0,
-        filename: "Solvencia_Caroni_" + registroActual.numero + ".pdf",
+        filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "letter", orientation: "portrait" }
+        jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] }
       }).from(el).save();
     }
 
