@@ -14,7 +14,7 @@
     .topbar h1 { font-size: 16px; letter-spacing: .3px; }
     .topbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* BARRA OSCURA TIPO VISOR OFICIAL AL ESCANEAR QR */
+    /* BARRA OSCURA SOLO AL ESCANEAR QR */
     .viewer-bar {
       background: #2b2c2f; color: #fff; padding: 12px 18px;
       display: flex; align-items: center; gap: 10px;
@@ -48,23 +48,31 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
-    /* DOS HOJAS BLANCAS SEPARADAS (TAMAÑO CARTA) */
+    /* MODO NORMAL (PANEL / CLIENTE): 1 SOLA HOJA SIN LETRAS LATERALES */
     .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
-    .sheet {
-      width: 215.9mm; min-height: 279.4mm; margin: 0 auto 16px auto; background: #fff;
-      padding: 12mm 11mm 15mm 14mm; position: relative; color: #000;
-      box-shadow: 0 4px 20px rgba(0,0,0,.35); overflow: hidden;
+    #documentoPdf {
+      width: 215.9mm; margin: 0 auto; background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
     }
-    .sheet-page1 { page-break-after: always; }
-    .sheet-page2 { padding-top: 14mm; }
+    .sheet { width: 215.9mm; background: #fff; position: relative; color: #000; overflow: hidden; }
+    .sheet-page1 { padding: 8mm 10mm 4mm 10mm; }
+    .sheet-page2 { padding: 0 10mm 15mm 10mm; }
+    .cut-line { border-top: 1.5px dashed #444; margin: 4px 0 8px; }
+    .side-text { display: none; }
 
-    /* LETRAS VERTICALES EN EL BORDE IZQUIERDO DE LA HOJA 1 */
-    .side-text {
-      position: absolute; left: 5mm; top: 52%;
-      transform: translateY(-50%) rotate(-90deg);
-      transform-origin: left center;
-      font-size: 7.2px; color: #222; white-space: nowrap;
-      letter-spacing: 0.2px; z-index: 2;
+    /* MODO VISOR QR (body.viewer-mode): 2 HOJAS SEPARADAS + LETRAS LATERALES */
+    body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
+    body.viewer-mode .sheet {
+      min-height: 279.4mm; margin: 0 auto 16px auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    }
+    body.viewer-mode .sheet-page1 { padding: 12mm 11mm 15mm 14mm; page-break-after: always; }
+    body.viewer-mode .sheet-page2 { padding: 14mm 11mm 15mm 11mm; }
+    body.viewer-mode .cut-line { display: none; }
+    body.viewer-mode .side-text {
+      display: block; position: absolute; left: 5mm; top: 52%;
+      transform: translateY(-50%) rotate(-90deg); transform-origin: left center;
+      font-size: 7.2px; color: #222; white-space: nowrap; letter-spacing: 0.2px; z-index: 2;
     }
 
     .watermark {
@@ -73,15 +81,15 @@
     }
     .sheet-content { position: relative; z-index: 1; }
 
-    /* ENCABEZADO 3 COLUMNAS CON QR EN TODO EL CENTRO */
+    /* ENCABEZADO 3 COLUMNAS CON QR Y LOGO MÁS GRANDES */
     .doc-header {
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      gap: 8px; min-height: 23mm; margin-bottom: 8mm;
+      gap: 8px; min-height: 24mm; margin-bottom: 3mm;
     }
-    .doc-header-left { font-size: 8.8px; font-weight: bold; line-height: 1.5; }
+    .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.65; }
     .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
-    .logo-top { max-height: 66px; max-width: 170px; object-fit: contain; }
+    .logo-top { max-height: 76px; max-width: 195px; object-fit: contain; }
 
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
@@ -102,44 +110,46 @@
 
     .gaceta-box {
       border: 1px solid #999; background: #f3f4f6; text-align: center;
-      font-size: 8.3px; padding: 7px; margin: 10px 0;
+      font-size: 8.3px; padding: 7px; margin: 9px 0;
     }
-    .notes-row { display: grid; grid-template-columns: 1fr 186px; gap: 12px; align-items: center; margin-top: 10px; }
+
+    /* RECUADRO PAGADA 1 CM MÁS ANCHO (224px) */
+    .notes-row { display: grid; grid-template-columns: 1fr 224px; gap: 12px; align-items: center; margin: 8px 0 10px; }
     .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; }
     .pagada-box {
-      border: 1.5px dashed #000; text-align: center; padding: 12px 10px;
-      font-size: 9.5px; line-height: 1.6;
+      border: 1.5px dashed #000; text-align: center; padding: 13px 14px;
+      font-size: 9.8px; line-height: 1.6; width: 100%;
     }
-    .pagada-box strong { display: block; font-size: 11px; }
+    .pagada-box strong { display: block; font-size: 11.5px; }
 
-    /* HOJA 2: SOLO EL CARNET MITAD Y MITAD */
+    /* CARNET MITAD Y MITAD (50% / 50%) */
     .cert-outer {
-      border: 1.5px dashed #444; padding: 10px;
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch;
+      border: 1.5px dashed #444; padding: 8px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;
     }
-    .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 8px; font-size: 8px; position: relative; }
+    .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 7px; font-size: 8px; position: relative; }
     .cert-head { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 4px; margin-bottom: 4px; }
     .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.2px; line-height: 1.3; }
-    .cert-title { text-align: center; font-weight: bold; font-size: 8.3px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
+    .cert-title { text-align: center; font-weight: bold; font-size: 8.2px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
     .cert-props { border: 1px solid #000; border-radius: 5px; padding: 4px 6px; margin-bottom: 4px; line-height: 1.4; font-size: 7.8px; }
     .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.8px; }
-    .cert-tbl td { border: 1px solid #000; padding: 3px 4px; }
+    .cert-tbl td { border: 1px solid #000; padding: 2.5px 4px; }
     .num-red { color: #c00; font-weight: bold; font-size: 9.5px; text-align: center; }
-    .cert-foot { text-align: center; font-size: 6.4px; margin-top: 5px; line-height: 1.25; }
+    .cert-foot { text-align: center; font-size: 6.4px; margin-top: 4px; line-height: 1.25; }
 
     .cert-right {
       position: relative; display: flex; justify-content: center; align-items: center;
-      min-height: 50mm; width: 100%;
+      min-height: 46mm; width: 100%;
     }
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
-    .logo-cert { max-height: 84px; max-width: 175px; object-fit: contain; }
+    .logo-cert { max-height: 82px; max-width: 175px; object-fit: contain; }
     .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
 
     @media print {
       body, body.viewer-mode { background: #fff; }
       .no-print { display: none !important; }
       .sheet-wrap { overflow: visible; padding: 0; }
-      .sheet { box-shadow: none; margin: 0; width: 215.9mm; min-height: 279.4mm; }
+      #documentoPdf, .sheet { box-shadow: none; margin: 0; }
     }
   </style>
 </head>
@@ -161,7 +171,7 @@
   </div>
 
   <div class="container">
-    <!-- VISTA PÚBLICA: SOLO BUSCADOR -->
+    <!-- VISTA PÚBLICA -->
     <div id="vistaPublica" class="card no-print">
       <h2 style="font-size:16px; color:#0a3480; margin-bottom:8px;">Consultar Certificado de Solvencia</h2>
       <p style="font-size:13px; color:#475569; margin-bottom:10px;">Ingrese su número de planilla, placa o cédula/RIF para visualizar y descargar su PDF.</p>
@@ -180,11 +190,11 @@
       </div>
 
       <div class="admin-section">
-        <h3 style="font-size:14px; color:#0f172a;">Tasa del Dólar y Tarifas (Solo visible aquí)</h3>
+        <h3 style="font-size:14px; color:#0f172a;">Tasa BCV Oficial y Tarifas (Solo visible aquí)</h3>
         <div class="grid-form">
           <div class="field">
-            <label>Tasa del Dólar (Bs por $ / UCD)</label>
-            <input id="fTasa" type="number" step="0.0001" value="838.0655" oninput="recalcularMontos()" />
+            <label>Tasa BCV Oficial (Bs por $)</label>
+            <input id="fTasa" type="number" step="0.0001" value="" oninput="recalcularMontos()" />
           </div>
           <div class="field">
             <label>Categoría / Tarifa</label>
@@ -234,7 +244,7 @@
           <div class="field"><label>Marca</label><input id="fMarca" type="text" /></div>
           <div class="field"><label>Modelo</label><input id="fModelo" type="text" /></div>
           <div class="field"><label>Año</label><input id="fAnio" type="text" /></div>
-          <div class="field"><label>Cilindrada</label><input id="fCilindrada" type="text" value="4 CILINDROS" /></div>
+          <div class="field"><label>Cilindrada</label><input id="fCilindrada" type="text" value="N/A" /></div>
           <div class="field"><label>Watts</label><input id="fWatts" type="text" value="N/A" /></div>
           <div class="field"><label>Peso / Carga</label><input id="fPeso" type="text" value="N/A" /></div>
           <div class="field"><label>Puestos</label><input id="fPuestos" type="text" value="N/A" /></div>
@@ -272,16 +282,16 @@
       </div>
     </div>
 
-    <!-- BOTONES DE PDF (VISTA NORMAL) -->
+    <!-- BOTONES DE PDF (VISTA NORMAL - 1 HOJA) -->
     <div id="barraPdf" class="toolbar-pdf no-print hidden">
-      <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF (2 Hojas)</button>
+      <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
       <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
     </div>
 
-    <!-- CONTENEDOR DE LAS 2 HOJAS OFICIALES -->
+    <!-- CONTENEDOR DEL DOCUMENTO -->
     <div id="contenedorHoja" class="sheet-wrap hidden">
       <div id="documentoPdf">
-        <!-- HOJA 1: DETERMINACIÓN DE IMPUESTO -->
+        <!-- SECCIÓN / HOJA 1 -->
         <div class="sheet sheet-page1">
           <div class="side-text">Escanee el código QR y será dirigido a la página web oficial para verificar la autenticidad de este documento.</div>
           <img id="imgWatermark1" class="watermark" alt="" />
@@ -399,10 +409,11 @@
           </div>
         </div>
 
-        <!-- HOJA 2: SOLO EL CARNET -->
+        <!-- SECCIÓN / HOJA 2 (EN PANEL VA PEGADA EN LA MISMA HOJA; EN QR VA EN HOJA 2) -->
         <div class="sheet sheet-page2">
           <img id="imgWatermark2" class="watermark" alt="" />
           <div class="sheet-content">
+            <div class="cut-line"></div>
             <div class="cert-outer">
               <div class="cert-card">
                 <div class="cert-head">
@@ -460,6 +471,8 @@
     // 1. CONFIGURACIÓN RÁPIDA (CLAVE, IMÁGENES Y TU NUBE DE FIREBASE)
     // =========================================================================
     const ADMIN_PASS = "23456";
+
+    // Pon aquí el nombre exacto de tu .png subido al repositorio (ej: "logo.png"):
     const IMAGEN_LOGO_CARONI = "";
     const IMAGEN_MARCA_AGUA  = "";
 
@@ -490,11 +503,11 @@
     }
 
     // =========================================================================
-    // 2. DATOS INICIALES, TASA AUTOMÁTICA Y NUBE COMPLETA
+    // 2. DATOS INICIALES, TASA BCV OFICIAL AUTOMÁTICA Y NUBE COMPLETA
     // =========================================================================
-    const STORAGE_KEY = "sat_caroni_registros_v2";
-    const ASSETS_KEY  = "sat_caroni_assets_v2";
-    const TASA_KEY    = "sat_caroni_tasa_v2";
+    const STORAGE_KEY = "sat_caroni_registros_v3";
+    const ASSETS_KEY  = "sat_caroni_assets_v3";
+    const TASA_KEY    = "sat_caroni_tasa_bcv_v3";
 
     const REGISTROS_INICIALES = [
       {
@@ -504,10 +517,10 @@
         estado: "MIRANDA", municipio: "BARUTA", parroquia: "NUESTRA SEÑORA DEL ROSARIO", sector: "LOS PICAPIEDRAS",
         tel: "04242616657", correo: "joseangeljjj@hotmail.com",
         tipo: "SEDAN", placa: "MBH93W", serial: "8XHCG56A0XV200026",
-        marca: "HONDA", modelo: "ACCORD LS EX 99", anio: "1999", cilindrada: "4 CILINDROS",
+        marca: "HONDA", modelo: "ACCORD LS EX 99", anio: "1999", cilindrada: "N/A",
         watts: "N/A", peso: "N/A", puestos: "N/A", ejes: "N/A", capacidad: "N/A",
         propRif: "V12888493", propNombre: "JOSE ANGEL RIVAS",
-        ucd: 18, tasa: 838.0655, descuento: 0
+        ucd: 18, tasa: 0, descuento: 0
       }
     ];
 
@@ -529,42 +542,42 @@
       if (!inp || document.getElementById("tasaEstado")) return;
       const div = document.createElement("div");
       div.style.cssText = "margin-top:4px;font-size:11px;display:flex;justify-content:space-between;align-items:center;gap:4px;";
-      div.innerHTML = `<span id="tasaEstado" style="color:#0a3480;">Buscando tasa...</span>
-        <button type="button" onclick="actualizarTasaDolar()" style="border:none;background:#0a3480;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">↻ Actualizar</button>`;
+      div.innerHTML = `<span id="tasaEstado" style="color:#0a3480;">Consultando BCV...</span>
+        <button type="button" onclick="actualizarTasaBCV()" style="border:none;background:#0a3480;color:#fff;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;">↻ BCV Hoy</button>`;
       inp.parentNode.appendChild(div);
     }
 
-    async function actualizarTasaDolar() {
+    // SOLO TASA OFICIAL DEL BANCO CENTRAL DE VENEZUELA (BCV)
+    async function actualizarTasaBCV() {
       crearControlesTasa();
       const est = document.getElementById("tasaEstado");
-      if (est) est.textContent = "Actualizando tasa...";
+      if (est) est.textContent = "Actualizando BCV...";
       try {
-        let res = await fetch("https://ve.dolarapi.com/v1/dolares/paralelo");
-        let data = res.ok ? await res.json() : null;
-        if (!data || !data.promedio) {
-          res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
-          data = res.ok ? await res.json() : null;
-        }
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+        const data = res.ok ? await res.json() : null;
         if (data && data.promedio) {
           const valor = Number(data.promedio).toFixed(4);
           document.getElementById("fTasa").value = valor;
           localStorage.setItem(TASA_KEY, JSON.stringify({ valor, fecha: hoyTexto() }));
-          if (est) est.textContent = `Tasa hoy: Bs. ${valor}`;
+          if (est) est.textContent = `BCV hoy: Bs. ${valor}`;
           recalcularMontos();
-          const spanTasa = document.getElementById("dTasa");
-          if (spanTasa) spanTasa.textContent = valor;
+          if (registroActual && !registroActual.tasa) {
+            registroActual.tasa = parseFloat(valor);
+            mostrarPlanilla(registroActual, document.body.classList.contains("viewer-mode"));
+          } else {
+            const spanTasa = document.getElementById("dTasa");
+            if (spanTasa && (!spanTasa.textContent || spanTasa.textContent === "0")) spanTasa.textContent = valor;
+          }
           return;
         }
-        throw new Error("Sin respuesta");
+        throw new Error("Sin respuesta BCV");
       } catch (e) {
         const guardada = JSON.parse(localStorage.getItem(TASA_KEY) || "null");
         if (guardada && guardada.valor) {
           document.getElementById("fTasa").value = guardada.valor;
-          if (est) est.textContent = `Última guardada (${guardada.fecha})`;
-          const spanTasa = document.getElementById("dTasa");
-          if (spanTasa) spanTasa.textContent = guardada.valor;
+          if (est) est.textContent = `BCV guardado (${guardada.fecha})`;
         } else if (est) {
-          est.textContent = "Tasa manual (sin conexión)";
+          est.textContent = "Sin conexión (ingresa BCV manual)";
         }
         recalcularMontos();
       }
@@ -589,9 +602,9 @@
 
       aplicarImagenes();
       renderTablaAdmin();
-      actualizarTasaDolar();
+      await actualizarTasaBCV();
 
-      // MODO VISOR DIRECTO AL ESCANEAR EL QR (?id=...)
+      // MODO VISOR DIRECTO AL ESCANEAR EL QR (?id=...) -> 2 HOJAS + LETRAS LATERALES
       const params = new URLSearchParams(window.location.search);
       const idQr = params.get("id");
       if (idQr) {
@@ -615,7 +628,7 @@
     }
 
     // =========================================================================
-    // 3. IMÁGENES (LOGO Y MARCA DE AGUA EN AMBAS HOJAS)
+    // 3. IMÁGENES (LOGO Y MARCA DE AGUA)
     // =========================================================================
     function getAssets() {
       const saved = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
@@ -685,7 +698,7 @@
       }
       mostrarVista("admin");
       nuevoRegistro();
-      actualizarTasaDolar();
+      actualizarTasaBCV();
     }
 
     function cerrarAdmin() {
@@ -744,6 +757,7 @@
       document.getElementById("fNumero").value = siguienteCorrelativo();
       document.getElementById("fFecha").value = hoyTexto();
       document.getElementById("fPeriodo").value = "AÑO " + new Date().getFullYear();
+      document.getElementById("fCilindrada").value = "N/A";
       ["fRif","fNombre","fCi","fDomicilio","fParroquia","fSector","fTel","fCorreo","fPlaca","fSerial","fMarca","fModelo","fAnio","fPropRif","fPropNombre"]
         .forEach(id => document.getElementById(id).value = "");
       recalcularMontos();
@@ -775,7 +789,7 @@
         marca: document.getElementById("fMarca").value.trim(),
         modelo: document.getElementById("fModelo").value.trim(),
         anio: document.getElementById("fAnio").value.trim(),
-        cilindrada: document.getElementById("fCilindrada").value.trim(),
+        cilindrada: document.getElementById("fCilindrada").value.trim() || "N/A",
         watts: document.getElementById("fWatts").value.trim() || "N/A",
         peso: document.getElementById("fPeso").value.trim() || "N/A",
         puestos: document.getElementById("fPuestos").value.trim() || "N/A",
@@ -802,7 +816,8 @@
     function renderTablaAdmin() {
       const tb = document.getElementById("listaRegistros");
       tb.innerHTML = registros.map(r => {
-        const total = Math.max(0, (r.ucd * r.tasa) - (r.descuento || 0));
+        const tasa = r.tasa || parseFloat(document.getElementById("fTasa").value) || 0;
+        const total = Math.max(0, (r.ucd * tasa) - (r.descuento || 0));
         return `<tr>
           <td><strong>${r.numero}</strong></td>
           <td>${r.nombre}</td>
@@ -830,7 +845,7 @@
     }
 
     // =========================================================================
-    // 6. RENDER DE LAS 2 HOJAS, QR Y DESCARGA PDF
+    // 6. RENDER (1 HOJA EN PANEL / 2 HOJAS EN VISOR QR) Y DESCARGA PDF
     // =========================================================================
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
@@ -840,7 +855,8 @@
 
     function mostrarPlanilla(r, modoVisor) {
       registroActual = r;
-      const impBs = (r.ucd || 0) * (r.tasa || 0);
+      const tasaUsar = r.tasa || parseFloat(document.getElementById("fTasa").value) || 0;
+      const impBs = (r.ucd || 0) * tasaUsar;
       const descBs = r.descuento || 0;
       const totalBs = Math.max(0, impBs - descBs);
 
@@ -851,24 +867,22 @@
       set("dParroquia", r.parroquia); set("dSector", r.sector); set("dTel", r.tel); set("dCorreo", r.correo);
       set("dTipo", r.tipo); set("dSerial", r.serial || r.placa); set("dMarca", r.marca);
       set("dAnio", r.anio); set("dModelo", r.modelo); set("dWatts", r.watts); set("dPeso", r.peso);
-      set("dPuestos", r.puestos); set("dEjes", r.ejes); set("dCapacidad", r.capacidad); set("dCilindrada", r.cilindrada);
+      set("dPuestos", r.puestos); set("dEjes", r.ejes); set("dCapacidad", r.capacidad); set("dCilindrada", r.cilindrada || "N/A");
       set("dPropRif", r.propRif || r.rif); set("dPropNombre", r.propNombre || r.nombre);
       set("dImpuestoBs", fmtBs(impBs)); set("dDescuentoBs", fmtBs(descBs));
       set("dUcd", fmtBs(r.ucd)); set("dTotalBs", fmtBs(totalBs));
-
-      const tasaMostrar = document.getElementById("fTasa").value || r.tasa;
-      set("dTasa", tasaMostrar);
+      set("dTasa", tasaUsar ? Number(tasaUsar).toFixed(4) : "");
       set("dFechaPagada", r.fecha);
 
       set("cProp", (r.propNombre || r.nombre) + " / " + (r.propRif || r.rif));
       set("cContrib", r.nombre + " / " + r.rif);
       set("cPlaca", r.placa || r.serial); set("cMarca", r.marca); set("cModelo", r.modelo);
-      set("cTipo", r.tipo); set("cCilindrada", r.cilindrada); set("cAnio", r.anio);
+      set("cTipo", r.tipo); set("cCilindrada", r.cilindrada || "N/A"); set("cAnio", r.anio);
       set("cPeriodo", r.periodo); set("cNumero", r.numero);
 
       const baseUrl = window.location.href.split("?")[0];
       const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero);
-      generarQR("qrTop", urlPersona, 64);
+      generarQR("qrTop", urlPersona, 76);
       generarQR("qrCert", urlPersona, 44);
       generarQR("qrBottom", urlPersona, 68);
 
