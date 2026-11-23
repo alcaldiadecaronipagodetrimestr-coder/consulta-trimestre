@@ -46,7 +46,7 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
-    /* CONTENEDOR ESCALABLE PARA QUE EN TELÉFONO SE VEA COMPLETO SIN SCROLL LATERAL */
+    /* CONTENEDOR ESCALABLE */
     .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
     body.viewer-mode .sheet-wrap { overflow: hidden; display: flex; justify-content: center; padding-bottom: 20px; }
     #escalaBox { transform-origin: top center; }
@@ -56,7 +56,7 @@
       width: 215.9mm; margin: 0 auto; background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,.18);
     }
-    .sheet { width: 215.9mm; background: #fff; position: relative; color: #000; overflow: hidden; }
+    .sheet { width: 215.9mm; background: #fff; position: relative; color: #000; }
     .sheet-page1 { padding: 8mm 10mm 4mm 10mm; }
     .sheet-page2 { padding: 0 10mm 15mm 10mm; }
     .cut-line { border-top: 1.5px dashed #444; margin: 4px 0 8px; }
@@ -65,11 +65,11 @@
     /* MODO VISOR QR: 2 HOJAS BLANCAS SEPARADAS + LETRAS LATERALES */
     body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
     body.viewer-mode .sheet {
-      height: 279.4mm; margin: 0 auto 14px auto;
+      min-height: 274mm; margin: 0 auto 14px auto;
       box-shadow: 0 4px 20px rgba(0,0,0,.45);
     }
-    body.viewer-mode .sheet-page1 { padding: 12mm 11mm 15mm 14mm; page-break-after: always; }
-    body.viewer-mode .sheet-page2 { padding: 14mm 11mm 15mm 11mm; }
+    body.viewer-mode .sheet-page1 { padding: 12mm 11mm 12mm 14mm; page-break-after: always; break-after: page; }
+    body.viewer-mode .sheet-page2 { padding: 14mm 11mm 12mm 11mm; page-break-before: always; break-before: page; }
     body.viewer-mode .cut-line { display: none; }
     body.viewer-mode .side-text {
       display: block; position: absolute; left: 5mm; top: 52%;
@@ -160,7 +160,7 @@
 
   <!-- BARRA OSCURA DE DESCARGA (SOLO AL ESCANEAR QR) -->
   <div id="barraViewer" class="viewer-bar no-print hidden">
-    <button onclick="descargarPDF()">
+    <button type="button" onclick="descargarPDF()">
       <span style="font-size:19px;">⬇</span> Download
     </button>
     <span id="dlStatus" class="dl-status"></span>
@@ -169,15 +169,15 @@
   <!-- BARRA SUPERIOR SOLO PARA EL PANEL PRIVADO -->
   <div id="barraTop" class="topbar no-print hidden">
     <h1>SAT Caroní — Panel Administrativo</h1>
-    <button class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
+    <button type="button" class="btn btn-danger" onclick="cerrarAdmin()">Cerrar Sesión</button>
   </div>
 
   <div class="container">
     <!-- ACCESO PRIVADO -->
     <div id="vistaLogin" class="card login-box no-print">
       <h2 style="font-size:17px; color:#0a3480;">Acceso Administrativo</h2>
-      <input id="inputPass" type="password" placeholder="Clave de acceso" onkeydown="if(event.key==='Enter') iniciarSesion()" />
-      <button class="btn btn-primary" style="width:100%;" onclick="iniciarSesion()">Entrar</button>
+      <input id="inputPass" type="password" autocomplete="off" onkeydown="if(event.key==='Enter') iniciarSesion()" />
+      <button type="button" class="btn btn-primary" style="width:100%;" onclick="iniciarSesion()">Entrar</button>
       <div id="msgLogin" style="margin-top:8px; font-size:13px; color:#b91c1c;"></div>
     </div>
 
@@ -250,8 +250,8 @@
           <div class="field"><label>Nombre Propietario</label><input id="fPropNombre" type="text" placeholder="Igual al contribuyente" /></div>
         </div>
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn btn-success" onclick="guardarRegistro()">Guardar y Generar Planilla</button>
-          <button class="btn btn-primary" onclick="nuevoRegistro()">Nuevo Correlativo</button>
+          <button type="button" class="btn btn-success" onclick="guardarRegistro()">Guardar y Generar Planilla</button>
+          <button type="button" class="btn btn-primary" onclick="nuevoRegistro()">Nuevo Correlativo</button>
         </div>
       </div>
 
@@ -280,8 +280,8 @@
 
     <!-- BOTONES DE PDF (VISTA PANEL) -->
     <div id="barraPdf" class="toolbar-pdf no-print hidden">
-      <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
-      <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+      <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
+      <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
     </div>
 
     <!-- CONTENEDOR DEL DOCUMENTO -->
@@ -465,16 +465,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
-    // =========================================================================
-    // 1. CONFIGURACIÓN RÁPIDA (CLAVE, IMÁGENES Y TU NUBE DE FIREBASE)
-    // =========================================================================
     const ADMIN_PASS = "23456";
-
-    // Logo subido en el repositorio:
     const IMAGEN_LOGO_CARONI = "./logo.png";
     const IMAGEN_MARCA_AGUA  = "";
 
-    // CLAVES DE TU PROYECTO EN FIREBASE CONSOLE (trimestre-caroni):
     const GITHUB_FIREBASE_CONFIG = {
       apiKey: "AIzaSyAaBYEh222rFs80r15q-V1UNFZ7XUiFRec",
       authDomain: "trimestre-caroni.firebaseapp.com",
@@ -500,12 +494,9 @@
       db = firebase.firestore();
     }
 
-    // =========================================================================
-    // 2. DATOS INICIALES, TASA BCV OFICIAL AUTOMÁTICA Y NUBE COMPLETA
-    // =========================================================================
-    const STORAGE_KEY = "sat_caroni_registros_v3";
-    const ASSETS_KEY  = "sat_caroni_assets_v3";
-    const TASA_KEY    = "sat_caroni_tasa_bcv_v3";
+    const STORAGE_KEY = "sat_caroni_registros_v8";
+    const ASSETS_KEY  = "sat_caroni_assets_v8";
+    const TASA_KEY    = "sat_caroni_tasa_bcv_v8";
 
     const REGISTROS_INICIALES = [
       {
@@ -524,6 +515,18 @@
 
     let registros = [];
     let registroActual = null;
+    let esModoQr = false;
+
+    const paramsIniciales = new URLSearchParams(window.location.search);
+    const idQrInicial = paramsIniciales.get("id");
+    if (idQrInicial) {
+      esModoQr = true;
+      document.body.classList.add("viewer-mode");
+      document.getElementById("vistaLogin").classList.add("hidden");
+      document.getElementById("vistaAdmin").classList.add("hidden");
+      document.getElementById("barraTop").classList.add("hidden");
+      document.getElementById("barraViewer").classList.remove("hidden");
+    }
 
     function hoyTexto() {
       const d = new Date();
@@ -538,12 +541,12 @@
       const box = document.getElementById("escalaBox");
       const doc = document.getElementById("documentoPdf");
       if (!box || !doc) return;
-      if (!document.body.classList.contains("viewer-mode")) {
+      if (!esModoQr) {
         box.style.transform = "";
         box.style.height = "";
         return;
       }
-      const anchoDisp = window.innerWidth - 20;
+      const anchoDisp = Math.max(280, window.innerWidth - 20);
       const anchoDoc = doc.offsetWidth || 816;
       const escala = Math.min(1, anchoDisp / anchoDoc);
       box.style.transform = `scale(${escala})`;
@@ -562,6 +565,7 @@
     }
 
     async function actualizarTasaBCV() {
+      if (esModoQr) return;
       crearControlesTasa();
       const est = document.getElementById("tasaEstado");
       if (est) est.textContent = "Actualizando BCV...";
@@ -576,7 +580,7 @@
           recalcularMontos();
           if (registroActual && !registroActual.tasa) {
             registroActual.tasa = parseFloat(valor);
-            mostrarPlanilla(registroActual, document.body.classList.contains("viewer-mode"));
+            mostrarPlanilla(registroActual, false);
           } else {
             const spanTasa = document.getElementById("dTasa");
             if (spanTasa && (!spanTasa.textContent || spanTasa.textContent === "0")) spanTasa.textContent = valor;
@@ -610,41 +614,36 @@
           }
           const cfg = await db.collection("config").doc("assets").get();
           if (cfg.exists) localStorage.setItem(ASSETS_KEY, JSON.stringify(cfg.data()));
-        } catch (e) { console.warn("Error leyendo nube:", e); }
+        } catch (e) {
+          console.warn("Error leyendo nube:", e);
+        }
       }
 
       aplicarImagenes();
-      renderTablaAdmin();
-      await actualizarTasaBCV();
 
-      // SI VIENE DE ESCANEAR UN QR (?id=...) -> DIRECTO AL VISOR DE 2 HOJAS Y DESCARGA SU PDF
-      const params = new URLSearchParams(window.location.search);
-      const idQr = params.get("id");
-      if (idQr) {
-        document.getElementById("vistaLogin").classList.add("hidden");
-        let encontrado = registros.find(r => r.numero === idQr);
-        if (!encontrado && db) {
-          try {
-            const doc = await db.collection("solvencias").doc(idQr).get();
-            if (doc.exists) encontrado = doc.data();
-          } catch (e) {}
-        }
-        if (encontrado) {
-          document.body.classList.add("viewer-mode");
-          document.getElementById("barraViewer").classList.remove("hidden");
-          mostrarPlanilla(encontrado, true);
-          setTimeout(() => { descargarPDF(); }, 900);
-        } else {
-          const err = document.getElementById("msgErrorQr");
-          err.textContent = "No se encontró el documento N° " + idQr;
-          err.classList.remove("hidden");
-        }
+      if (!esModoQr) {
+        renderTablaAdmin();
+        await actualizarTasaBCV();
+        return;
+      }
+
+      let encontrado = registros.find(r => r.numero === idQrInicial);
+      if (!encontrado && db) {
+        try {
+          const doc = await db.collection("solvencias").doc(idQrInicial).get();
+          if (doc.exists) encontrado = doc.data();
+        } catch (e) {}
+      }
+
+      if (encontrado) {
+        mostrarPlanilla(encontrado, true);
+      } else {
+        const err = document.getElementById("msgErrorQr");
+        err.innerHTML = `No se encontró el documento N° ${idQrInicial}.<br><span style="font-size:12px;font-weight:normal;color:#475569;">Verifica que Firestore Database esté creado y las reglas publicadas en Firebase.</span>`;
+        err.classList.remove("hidden");
       }
     }
 
-    // =========================================================================
-    // 3. IMÁGENES (LOGO Y MARCA DE AGUA)
-    // =========================================================================
     function getAssets() {
       const saved = JSON.parse(localStorage.getItem(ASSETS_KEY) || "{}");
       return {
@@ -697,13 +696,11 @@
       aplicarImagenes();
     }
 
-    // =========================================================================
-    // 4. ACCESO AL PANEL ADMIN
-    // =========================================================================
     function iniciarSesion() {
+      if (esModoQr) return;
       const pass = document.getElementById("inputPass").value.trim();
       if (pass !== ADMIN_PASS) {
-        document.getElementById("msgLogin").textContent = "Clave incorrecta.";
+        document.getElementById("msgLogin").textContent = "Acceso denegado.";
         return;
       }
       document.getElementById("msgLogin").textContent = "";
@@ -723,9 +720,6 @@
       document.getElementById("vistaLogin").classList.remove("hidden");
     }
 
-    // =========================================================================
-    // 5. CORRELATIVO INFINITO, TARIFAS EN BS Y GUARDADO EN NUBE
-    // =========================================================================
     function siguienteCorrelativo() {
       if (!registros.length) return "0000152544";
       const max = Math.max(...registros.map(r => parseInt(r.numero, 10) || 0));
@@ -813,7 +807,6 @@
 
       renderTablaAdmin();
       mostrarPlanilla(reg, false);
-      document.getElementById("fNumero").value = siguienteCorrelativo();
       alert("Planilla N° " + numero + " guardada en la nube.");
     }
 
@@ -828,8 +821,8 @@
           <td>${r.placa || r.serial}</td>
           <td>Bs. ${fmtBs(total)}</td>
           <td>
-            <button class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="verPorNumero('${r.numero}')">Ver</button>
-            <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="eliminarRegistro('${r.numero}')">X</button>
+            <button type="button" class="btn btn-primary" style="padding:4px 8px;font-size:11px;" onclick="verPorNumero('${r.numero}')">Ver</button>
+            <button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="eliminarRegistro('${r.numero}')">X</button>
           </td>
         </tr>`;
       }).join("");
@@ -848,9 +841,6 @@
       renderTablaAdmin();
     }
 
-    // =========================================================================
-    // 6. RENDER Y DESCARGA PDF NÍTIDA
-    // =========================================================================
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
       el.innerHTML = "";
@@ -892,33 +882,41 @@
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
       document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
-      setTimeout(ajustarEscalaVisor, 50);
+      setTimeout(ajustarEscalaVisor, 60);
     }
 
     async function descargarPDF() {
       if (!registroActual) return;
       const box = document.getElementById("escalaBox");
+      const wrap = document.getElementById("contenedorHoja");
       const el = document.getElementById("documentoPdf");
       const st = document.getElementById("dlStatus");
       if (st) st.textContent = "Generando PDF...";
 
       const prevTransform = box.style.transform;
       const prevHeight = box.style.height;
+      const prevOverflow = wrap.style.overflow;
+      const prevDisplay = wrap.style.display;
+
       box.style.transform = "none";
       box.style.height = "auto";
+      wrap.style.overflow = "visible";
+      wrap.style.display = "block";
 
       try {
         await html2pdf().set({
-          margin: 0,
+          margin: [2, 2, 2, 2],
           filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
+          html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, width: el.scrollWidth },
           jsPDF: { unit: "mm", format: "letter", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"] }
         }).from(el).save();
       } finally {
         box.style.transform = prevTransform;
         box.style.height = prevHeight;
+        wrap.style.overflow = prevOverflow;
+        wrap.style.display = prevDisplay;
         if (st) st.textContent = "";
       }
     }
