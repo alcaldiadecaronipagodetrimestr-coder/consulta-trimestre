@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SAT Caroní - Determinación y Solvencia Vehicular</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
@@ -19,9 +18,9 @@
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 50; border-bottom: 1px solid #3c4043;
     }
-    .viewer-bar button, .viewer-bar a {
+    .viewer-bar button {
       background: transparent; border: none; color: #fff; font-size: 15px;
-      display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; text-decoration: none;
+      display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500;
     }
     .viewer-bar .dl-status { font-size: 12px; color: #9aa0a6; }
 
@@ -53,10 +52,6 @@
       width: 215.9mm; margin: 0 auto; background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,.18);
     }
-    #documentoPdf, #documentoPdf * {
-      word-spacing: normal !important;
-      letter-spacing: normal !important;
-    }
     .sheet { width: 215.9mm; background: #fff; position: relative; color: #000; }
     .sheet-page1 { padding: 8mm 10mm 0 10mm; }
     .sheet-page2 { padding: 0 10mm 12mm 10mm; }
@@ -83,16 +78,16 @@
     }
     .sheet-content { position: relative; z-index: 1; }
 
-    .bloque-superior { padding-bottom: 1.5mm; }
+    .bloque-superior { padding-bottom: 2mm; }
 
     .doc-header {
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      gap: 8px; min-height: 27mm; margin-bottom: 4.5mm;
+      gap: 8px; min-height: 28mm; margin-bottom: 5mm;
     }
-    .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.8; text-align: left; }
+    .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.85; text-align: left; }
     .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
-    .logo-top { max-height: 94px; max-width: 232px; object-fit: contain; }
+    .logo-top { max-height: 96px; max-width: 235px; object-fit: contain; }
 
     .qr-box canvas, .qr-box img {
       display: block !important;
@@ -102,13 +97,13 @@
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
       text-align: center; font-weight: bold; font-size: 13.5px;
-      padding: 14px 6px; margin-bottom: 11px;
+      padding: 15px 6px; margin-bottom: 12px;
     }
-    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 9.5px; font-size: 9.6px; }
-    .meta-table td, .data-table td { border: 1px solid #000; padding: 7px 7px; vertical-align: middle; text-align: left; }
+    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 10.5px; font-size: 9.6px; }
+    .meta-table td, .data-table td { border: 1px solid #000; padding: 7.5px 7px; vertical-align: middle; text-align: left; }
     .bar-blue {
       background: #16489c; color: #fff; text-align: center; font-weight: bold;
-      font-size: 10px; padding: 7px 4px; border-radius: 6px; margin: 9.5px 0 6.5px;
+      font-size: 10px; padding: 7.5px 4px; border-radius: 6px; margin: 10.5px 0 7px;
       letter-spacing: .3px;
     }
     .lbl { font-weight: bold; white-space: nowrap; }
@@ -118,14 +113,21 @@
 
     .gaceta-box {
       border: 1px solid #999; background: #f3f4f6; text-align: center;
-      font-size: 8.4px; padding: 8.5px; margin: 12px 0 0;
+      font-size: 8.4px; padding: 9px; margin: 13px 0 0;
     }
 
     .notes-row {
       display: grid; grid-template-columns: 1fr calc(224px - 20mm);
-      gap: 12px; align-items: start; margin: 0 0 5mm; padding-top: 2mm;
+      gap: 12px; align-items: start; margin: 0 0 5mm; padding-top: 1.5mm;
     }
-    .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; text-align: left; }
+    .notes-text {
+      font-size: 8.1px; font-style: italic; line-height: 1.48;
+      text-align: left; word-spacing: normal; letter-spacing: normal;
+    }
+    .notes-line {
+      display: block; margin-bottom: 1.5px; text-align: left;
+      word-spacing: normal; letter-spacing: normal;
+    }
     .pagada-box {
       border: 1.5px dashed #000; text-align: center; padding: 11px 8px;
       min-height: 24mm; width: 100%; margin-top: -1mm;
@@ -158,21 +160,13 @@
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
     .logo-cert { max-height: 108px; max-width: 220px; object-fit: contain; }
     .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
-
-    .pdf-visor-box {
-      max-width: 900px; margin: 12px auto 24px; background: #fff;
-      border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.45);
-    }
-    .pdf-visor-frame {
-      width: 100%; height: 82vh; border: none; display: block;
-    }
   </style>
 </head>
 <body>
 
   <div id="barraViewer" class="viewer-bar hidden">
-    <button type="button" onclick="descargarPDF(true)">
-      <span style="font-size:19px;">⬇</span> Download PDF
+    <button type="button" onclick="descargarPDF()">
+      <span style="font-size:19px;">⬇</span> Download
     </button>
     <span id="dlStatus" class="dl-status"></span>
   </div>
@@ -190,10 +184,6 @@
     </div>
 
     <div id="msgErrorQr" class="card hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
-
-    <div id="visorPdfFrameBox" class="pdf-visor-box hidden">
-      <iframe id="visorPdfFrame" class="pdf-visor-frame" title="PDF de Solvencia"></iframe>
-    </div>
 
     <div id="vistaAdmin" class="card hidden">
       <div class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
@@ -290,7 +280,7 @@
     </div>
 
     <div id="barraPdf" class="toolbar-pdf hidden">
-      <button type="button" class="btn btn-success" onclick="descargarPDF(true)">Descargar PDF</button>
+      <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
     </div>
 
     <div id="contenedorHoja" class="sheet-wrap hidden">
@@ -403,9 +393,9 @@
 
               <div class="notes-row">
                 <div class="notes-text">
-                  - Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.<br/>
-                  - El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.<br/>
-                  - Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".
+                  <span class="notes-line">- Para la liquidación de este tributo, la Unidad de Cuenta Dinámica se calcula utilizando el tipo de cambio de la moneda de mayor valor, fijado por el Banco Central de Venezuela en Bs. <span id="dTasa"></span> a la fecha de su emisión.</span>
+                  <span class="notes-line">- El pago deberá hacerse exclusivamente en la cantidad equivalente en bolívares, al tipo de cambio vigente para la fecha del pago.</span>
+                  <span class="notes-line">- Los ajustes de la deuda podrán ser visualizados en la planilla de "Historial de movimiento de deuda".</span>
                 </div>
                 <div class="pagada-box">
                   <strong>PAGADA</strong>
@@ -655,7 +645,6 @@
 
       if (encontrado) {
         mostrarPlanilla(encontrado, true);
-        setTimeout(() => descargarPDF(false), 350);
       } else {
         const err = document.getElementById("msgErrorQr");
         err.innerHTML = `No se encontró el documento N° ${idQrInicial || ""}.`;
@@ -737,7 +726,6 @@
       document.getElementById("vistaAdmin").classList.add("hidden");
       document.getElementById("contenedorHoja").classList.add("hidden");
       document.getElementById("barraPdf").classList.add("hidden");
-      document.getElementById("visorPdfFrameBox").classList.add("hidden");
       document.getElementById("vistaLogin").classList.remove("hidden");
     }
 
@@ -913,12 +901,13 @@
       setTimeout(ajustarEscalaVisor, 60);
     }
 
-    async function descargarPDF(forzarDescarga = true) {
+    async function descargarPDF() {
       if (!registroActual) return;
       const box = document.getElementById("escalaBox");
       const wrap = document.getElementById("contenedorHoja");
+      const elem = document.getElementById("documentoPdf");
       const st = document.getElementById("dlStatus");
-      if (st) st.textContent = "Abriendo PDF...";
+      if (st) st.textContent = "Generando PDF...";
 
       const prevTransform = box.style.transform;
       const prevHeight = box.style.height;
@@ -931,42 +920,16 @@
       wrap.style.display = "block";
 
       try {
-        const JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-        const pdf = new JsPDFCtor({ unit: "mm", format: "letter", orientation: "portrait" });
-        const hojas = document.querySelectorAll("#documentoPdf .sheet");
-
-        for (let i = 0; i < hojas.length; i++) {
-          const canvas = await html2canvas(hojas[i], {
-            scale: 2.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: "#ffffff",
-            scrollX: 0,
-            scrollY: 0
-          });
-          const imgData = canvas.toDataURL("image/jpeg", 0.96);
-          const pageW = 215.9;
-          const pageH = 279.4;
-          const imgH = Math.min(pageH, (canvas.height * pageW) / canvas.width);
-          if (i > 0) pdf.addPage("letter", "portrait");
-          pdf.addImage(imgData, "JPEG", 0, 0, pageW, imgH);
-        }
-
-        const nombreArchivo = "declaracion_vehiculo_" + registroActual.numero + ".pdf";
-        if (forzarDescarga) {
-          pdf.save(nombreArchivo);
-        } else {
-          const blobUrl = pdf.output("bloburl");
-          const frameBox = document.getElementById("visorPdfFrameBox");
-          const frame = document.getElementById("visorPdfFrame");
-          if (frameBox && frame) {
-            frame.src = blobUrl;
-            frameBox.classList.remove("hidden");
-            wrap.classList.add("hidden");
-          }
-        }
+        const opt = {
+          margin: 0,
+          filename: "declaracion_vehiculo_" + registroActual.numero + ".pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2.5, useCORS: true, backgroundColor: "#ffffff", scrollX: 0, scrollY: 0 },
+          jsPDF: { unit: "mm", format: "letter", orientation: "portrait" }
+        };
+        await html2pdf().set(opt).from(elem).save();
       } catch (e) {
-        if (st) st.textContent = "Error al generar PDF";
+        if (st) st.textContent = "Error al descargar";
       } finally {
         box.style.transform = prevTransform;
         box.style.height = prevHeight;
