@@ -417,7 +417,6 @@
                       ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
                       SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
                     </div>
-                    <div id="qrCert" class="qr-box"></div>
                   </div>
                   <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
                   <div class="cert-props">
@@ -449,7 +448,6 @@
                   <div class="cert-logo-center">
                     <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
                   </div>
-                  <div class="cert-qr-bottom"><div id="qrBottom" class="qr-box"></div></div>
                 </div>
               </div>
             </div>
@@ -852,6 +850,7 @@
 
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
+      if (!el) return;
       el.innerHTML = "";
       new QRCode(el, {
         text: texto,
@@ -861,6 +860,14 @@
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
+      const imgs = el.querySelectorAll("img");
+      if (imgs.length > 1) {
+        for (let i = 1; i < imgs.length; i++) imgs[i].remove();
+      }
+      const canvases = el.querySelectorAll("canvas");
+      if (canvases.length > 1) {
+        for (let i = 1; i < canvases.length; i++) canvases[i].remove();
+      }
     }
 
     function mostrarPlanilla(r, modoVisor) {
@@ -893,8 +900,6 @@
       const baseUrl = window.location.href.split("?")[0];
       const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero);
       generarQR("qrTop", urlPersona, 84);
-      generarQR("qrCert", urlPersona, 52);
-      generarQR("qrBottom", urlPersona, 74);
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
       document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
