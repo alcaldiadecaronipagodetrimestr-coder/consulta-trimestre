@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SAT Caroní - Determinación y Solvencia Vehicular</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { font-family: Arial, Helvetica, sans-serif; background: #e9edf3; color: #111; }
@@ -18,9 +19,9 @@
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 50; border-bottom: 1px solid #3c4043;
     }
-    .viewer-bar button {
+    .viewer-bar button, .viewer-bar a {
       background: transparent; border: none; color: #fff; font-size: 15px;
-      display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500;
+      display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; text-decoration: none;
     }
     .viewer-bar .dl-status { font-size: 12px; color: #9aa0a6; }
 
@@ -58,8 +59,8 @@
     }
     .sheet { width: 215.9mm; background: #fff; position: relative; color: #000; }
     .sheet-page1 { padding: 8mm 10mm 0 10mm; }
-    .sheet-page2 { padding: 0 10mm 15mm 10mm; }
-    .cut-line { border-top: 1.5px dashed #444; margin: 0 0 3mm; }
+    .sheet-page2 { padding: 0 10mm 12mm 10mm; }
+    .cut-line { border-top: 1.5px dashed #444; margin: 0 0 2mm; }
     .side-text { display: none; }
 
     body.viewer-mode #documentoPdf { background: transparent; box-shadow: none; }
@@ -68,7 +69,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,.45);
     }
     body.viewer-mode .sheet-page1 { padding: 10mm 11mm 10mm 14mm; page-break-after: always; break-after: page; }
-    body.viewer-mode .sheet-page2 { padding: 12mm 11mm 10mm 11mm; }
+    body.viewer-mode .sheet-page2 { padding: 8mm 11mm 10mm 11mm; }
     body.viewer-mode .cut-line { display: none; }
     body.viewer-mode .side-text {
       display: block; position: absolute; left: 5mm; top: 52%;
@@ -82,27 +83,32 @@
     }
     .sheet-content { position: relative; z-index: 1; }
 
-    .bloque-superior { padding-bottom: 0.5mm; }
+    .bloque-superior { padding-bottom: 1.5mm; }
 
     .doc-header {
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      gap: 8px; min-height: 26mm; margin-bottom: 4mm;
+      gap: 8px; min-height: 27mm; margin-bottom: 4.5mm;
     }
-    .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.75; text-align: left; }
+    .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.8; text-align: left; }
     .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
-    .logo-top { max-height: 92px; max-width: 230px; object-fit: contain; }
+    .logo-top { max-height: 94px; max-width: 232px; object-fit: contain; }
+
+    .qr-box canvas, .qr-box img {
+      display: block !important;
+      image-rendering: pixelated;
+    }
 
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
       text-align: center; font-weight: bold; font-size: 13.5px;
-      padding: 13px 6px; margin-bottom: 10px;
+      padding: 14px 6px; margin-bottom: 11px;
     }
-    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 9px; font-size: 9.6px; }
-    .meta-table td, .data-table td { border: 1px solid #000; padding: 6.5px 7px; vertical-align: middle; text-align: left; }
+    .meta-table, .data-table { width: 100%; border-collapse: collapse; margin-bottom: 9.5px; font-size: 9.6px; }
+    .meta-table td, .data-table td { border: 1px solid #000; padding: 7px 7px; vertical-align: middle; text-align: left; }
     .bar-blue {
       background: #16489c; color: #fff; text-align: center; font-weight: bold;
-      font-size: 10px; padding: 6.5px 4px; border-radius: 6px; margin: 9px 0 6px;
+      font-size: 10px; padding: 7px 4px; border-radius: 6px; margin: 9.5px 0 6.5px;
       letter-spacing: .3px;
     }
     .lbl { font-weight: bold; white-space: nowrap; }
@@ -112,50 +118,61 @@
 
     .gaceta-box {
       border: 1px solid #999; background: #f3f4f6; text-align: center;
-      font-size: 8.4px; padding: 8px; margin: 11px 0 0;
+      font-size: 8.4px; padding: 8.5px; margin: 12px 0 0;
     }
 
     .notes-row {
-      display: grid; grid-template-columns: 1fr 224px; gap: 12px;
-      align-items: end; margin: 0 0 5mm; padding-top: 8mm;
+      display: grid; grid-template-columns: 1fr calc(224px - 20mm);
+      gap: 12px; align-items: start; margin: 0 0 5mm; padding-top: 2mm;
     }
     .notes-text { font-size: 8.2px; font-style: italic; line-height: 1.5; text-align: left; }
     .pagada-box {
-      border: 1.5px dashed #000; text-align: center; padding: 12px 10px;
-      min-height: 25mm; width: 100%;
+      border: 1.5px dashed #000; text-align: center; padding: 11px 8px;
+      min-height: 24mm; width: 100%; margin-top: -1mm;
       display: flex; flex-direction: column; justify-content: center;
-      font-size: 9.6px; line-height: 1.6;
+      font-size: 9.4px; line-height: 1.55;
     }
-    .pagada-box strong { display: block; font-size: 11.2px; }
+    .pagada-box strong { display: block; font-size: 11px; }
 
     .cert-outer {
-      border: 1.5px dashed #444; padding: 8px; margin: 0 10mm;
+      border: 1.5px dashed #444; padding: 9px; margin: -1.5mm 10mm 0;
       display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch;
     }
-    .cert-card { border: 1.2px solid #000; border-radius: 8px; padding: 7px; font-size: 8px; position: relative; }
-    .cert-head { display: grid; grid-template-columns: 1fr 48px; align-items: center; gap: 4px; margin-bottom: 4px; }
-    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7px; line-height: 1.3; }
-    .cert-title { text-align: center; font-weight: bold; font-size: 8px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 2.5px 0; margin: 4px 0; }
-    .cert-props { border: 1px solid #000; border-radius: 5px; padding: 4px 6px; margin-bottom: 4px; line-height: 1.4; font-size: 7.6px; text-align: left; }
-    .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.6px; }
-    .cert-tbl td { border: 1px solid #000; padding: 2.5px 4px; text-align: left; }
-    .num-red { color: #c00; font-weight: bold; font-size: 9.2px; text-align: center !important; }
-    .cert-foot { text-align: center; font-size: 6.2px; margin-top: 4px; line-height: 1.25; }
+    .cert-card {
+      border: 1.2px solid #000; border-radius: 8px; padding: 8px;
+      font-size: 8.1px; position: relative; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .cert-head { display: grid; grid-template-columns: 1fr 54px; align-items: center; gap: 4px; margin-bottom: 5px; }
+    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.1px; line-height: 1.35; }
+    .cert-title { text-align: center; font-weight: bold; font-size: 8.1px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; margin: 4.5px 0; }
+    .cert-props { border: 1px solid #000; border-radius: 5px; padding: 5px 6px; margin-bottom: 5px; line-height: 1.45; font-size: 7.7px; text-align: left; }
+    .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.7px; }
+    .cert-tbl td { border: 1px solid #000; padding: 3px 4px; text-align: left; }
+    .num-red { color: #c00; font-weight: bold; font-size: 9.4px; text-align: center !important; }
+    .cert-foot { text-align: center; font-size: 6.3px; margin-top: 5px; line-height: 1.3; }
 
     .cert-right {
       position: relative; display: flex; justify-content: center; align-items: center;
-      min-height: 46mm; width: 100%;
+      min-height: 53mm; width: 100%;
     }
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
-    .logo-cert { max-height: 98px; max-width: 210px; object-fit: contain; }
+    .logo-cert { max-height: 108px; max-width: 220px; object-fit: contain; }
     .cert-qr-bottom { position: absolute; right: 0; bottom: 0; }
+
+    .pdf-visor-box {
+      max-width: 900px; margin: 12px auto 24px; background: #fff;
+      border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.45);
+    }
+    .pdf-visor-frame {
+      width: 100%; height: 82vh; border: none; display: block;
+    }
   </style>
 </head>
 <body>
 
   <div id="barraViewer" class="viewer-bar hidden">
-    <button type="button" onclick="descargarPDF()">
-      <span style="font-size:19px;">⬇</span> Download
+    <button type="button" onclick="descargarPDF(true)">
+      <span style="font-size:19px;">⬇</span> Download PDF
     </button>
     <span id="dlStatus" class="dl-status"></span>
   </div>
@@ -173,6 +190,10 @@
     </div>
 
     <div id="msgErrorQr" class="card hidden" style="text-align:center; color:#b91c1c; font-weight:bold;"></div>
+
+    <div id="visorPdfFrameBox" class="pdf-visor-box hidden">
+      <iframe id="visorPdfFrame" class="pdf-visor-frame" title="PDF de Solvencia"></iframe>
+    </div>
 
     <div id="vistaAdmin" class="card hidden">
       <div class="admin-section" style="border-top:none; margin-top:0; padding-top:0;">
@@ -269,7 +290,7 @@
     </div>
 
     <div id="barraPdf" class="toolbar-pdf hidden">
-      <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
+      <button type="button" class="btn btn-success" onclick="descargarPDF(true)">Descargar PDF</button>
     </div>
 
     <div id="contenedorHoja" class="sheet-wrap hidden">
@@ -287,7 +308,7 @@
                     ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
                     SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
                   </div>
-                  <div class="doc-header-center"><div id="qrTop"></div></div>
+                  <div class="doc-header-center"><div id="qrTop" class="qr-box"></div></div>
                   <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
                 </div>
 
@@ -406,7 +427,7 @@
                       ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
                       SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
                     </div>
-                    <div id="qrCert"></div>
+                    <div id="qrCert" class="qr-box"></div>
                   </div>
                   <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
                   <div class="cert-props">
@@ -438,7 +459,7 @@
                   <div class="cert-logo-center">
                     <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
                   </div>
-                  <div class="cert-qr-bottom"><div id="qrBottom"></div></div>
+                  <div class="cert-qr-bottom"><div id="qrBottom" class="qr-box"></div></div>
                 </div>
               </div>
             </div>
@@ -448,8 +469,6 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script>
@@ -507,8 +526,7 @@
 
     const paramsIniciales = new URLSearchParams(window.location.search);
     const idQrInicial = paramsIniciales.get("id");
-    const dataQrInicial = paramsIniciales.get("d");
-    if (idQrInicial || dataQrInicial) {
+    if (idQrInicial) {
       esModoQr = true;
       document.body.classList.add("viewer-mode");
       document.getElementById("vistaLogin").classList.add("hidden");
@@ -589,40 +607,6 @@
       }
     }
 
-    function decodificarDatoQr(raw) {
-      if (!raw) return null;
-      try {
-        const bin = atob(decodeURIComponent(raw));
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return JSON.parse(new TextDecoder().decode(bytes));
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function codificarDatoQr(r) {
-      try {
-        const payload = {
-          numero: r.numero, periodo: r.periodo, fecha: r.fecha,
-          rif: r.rif, nombre: r.nombre, ci: r.ci, rep: r.rep,
-          domicilio: r.domicilio, estado: r.estado, municipio: r.municipio,
-          parroquia: r.parroquia, sector: r.sector, tel: r.tel, correo: r.correo,
-          tipo: r.tipo, placa: r.placa, serial: r.serial, marca: r.marca,
-          modelo: r.modelo, anio: r.anio, cilindrada: r.cilindrada,
-          watts: r.watts, peso: r.peso, puestos: r.puestos, ejes: r.ejes,
-          capacidad: r.capacidad, propRif: r.propRif, propNombre: r.propNombre,
-          ucd: r.ucd, tasa: r.tasa, descuento: r.descuento
-        };
-        const bytes = new TextEncoder().encode(JSON.stringify(payload));
-        let bin = "";
-        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-        return encodeURIComponent(btoa(bin));
-      } catch (e) {
-        return "";
-      }
-    }
-
     async function cargarTodo() {
       const local = localStorage.getItem(STORAGE_KEY);
       registros = local ? JSON.parse(local) : [...REGISTROS_INICIALES];
@@ -669,12 +653,9 @@
         encontrado = registros.find(r => String(r.numero) === String(idQrInicial));
       }
 
-      if (!encontrado && dataQrInicial) {
-        encontrado = decodificarDatoQr(dataQrInicial);
-      }
-
       if (encontrado) {
         mostrarPlanilla(encontrado, true);
+        setTimeout(() => descargarPDF(false), 350);
       } else {
         const err = document.getElementById("msgErrorQr");
         err.innerHTML = `No se encontró el documento N° ${idQrInicial || ""}.`;
@@ -756,6 +737,7 @@
       document.getElementById("vistaAdmin").classList.add("hidden");
       document.getElementById("contenedorHoja").classList.add("hidden");
       document.getElementById("barraPdf").classList.add("hidden");
+      document.getElementById("visorPdfFrameBox").classList.add("hidden");
       document.getElementById("vistaLogin").classList.remove("hidden");
     }
 
@@ -883,7 +865,14 @@
     function generarQR(idElem, texto, size) {
       const el = document.getElementById(idElem);
       el.innerHTML = "";
-      new QRCode(el, { text: texto, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode(el, {
+        text: texto,
+        width: size,
+        height: size,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
     }
 
     function mostrarPlanilla(r, modoVisor) {
@@ -914,23 +903,22 @@
       set("cPeriodo", r.periodo); set("cNumero", r.numero);
 
       const baseUrl = window.location.href.split("?")[0];
-      const packed = codificarDatoQr(r);
-      const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero) + (packed && packed.length < 1400 ? "&d=" + packed : "");
-      generarQR("qrTop", urlPersona, 76);
-      generarQR("qrCert", urlPersona, 44);
-      generarQR("qrBottom", urlPersona, 68);
+      const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero);
+      generarQR("qrTop", urlPersona, 84);
+      generarQR("qrCert", urlPersona, 52);
+      generarQR("qrBottom", urlPersona, 74);
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
       document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
       setTimeout(ajustarEscalaVisor, 60);
     }
 
-    async function descargarPDF() {
+    async function descargarPDF(forzarDescarga = true) {
       if (!registroActual) return;
       const box = document.getElementById("escalaBox");
       const wrap = document.getElementById("contenedorHoja");
       const st = document.getElementById("dlStatus");
-      if (st) st.textContent = "Generando PDF...";
+      if (st) st.textContent = "Abriendo PDF...";
 
       const prevTransform = box.style.transform;
       const prevHeight = box.style.height;
@@ -965,7 +953,18 @@
         }
 
         const nombreArchivo = "declaracion_vehiculo_" + registroActual.numero + ".pdf";
-        pdf.save(nombreArchivo);
+        if (forzarDescarga) {
+          pdf.save(nombreArchivo);
+        } else {
+          const blobUrl = pdf.output("bloburl");
+          const frameBox = document.getElementById("visorPdfFrameBox");
+          const frame = document.getElementById("visorPdfFrame");
+          if (frameBox && frame) {
+            frame.src = blobUrl;
+            frameBox.classList.remove("hidden");
+            wrap.classList.add("hidden");
+          }
+        }
       } catch (e) {
         if (st) st.textContent = "Error al generar PDF";
       } finally {
