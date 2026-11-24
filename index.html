@@ -44,6 +44,33 @@
     .records-table th { background: #f1f5f9; }
     .toolbar-pdf { display: flex; justify-content: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
 
+    .qr-unico-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 10px;
+    }
+    .qr-300-box {
+      width: 316px;
+      height: 316px;
+      padding: 8px;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    .qr-300-box canvas, .qr-300-box img {
+      width: 300px !important;
+      height: 300px !important;
+      display: block !important;
+      image-rendering: pixelated;
+    }
+
     .sheet-wrap { overflow-x: auto; padding-bottom: 24px; }
     body.viewer-mode .sheet-wrap { overflow: hidden; display: flex; justify-content: center; padding-bottom: 20px; }
     #escalaBox { transform-origin: top center; }
@@ -81,26 +108,12 @@
     .bloque-superior { padding-bottom: 2mm; }
 
     .doc-header {
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      gap: 8px; min-height: 28mm; margin-bottom: 5mm;
+      display: grid; grid-template-columns: 1fr auto; align-items: center;
+      gap: 12px; min-height: 28mm; margin-bottom: 5mm;
     }
     .doc-header-left { font-size: 9px; font-weight: bold; line-height: 1.85; text-align: left; }
-    .doc-header-center { display: flex; justify-content: center; align-items: center; }
     .doc-header-right { display: flex; justify-content: flex-end; align-items: center; }
     .logo-top { max-height: 96px; max-width: 235px; object-fit: contain; }
-
-    .qr-box {
-      background: #ffffff;
-      padding: 3px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 0;
-    }
-    .qr-box canvas, .qr-box img {
-      display: block !important;
-      image-rendering: pixelated;
-    }
 
     .title-box {
       background: #e2e5e9; border: 1px solid #000; border-radius: 7px;
@@ -152,9 +165,8 @@
       border: 1.2px solid #000; border-radius: 8px; padding: 8px;
       font-size: 8.1px; position: relative; display: flex; flex-direction: column; justify-content: space-between;
     }
-    .cert-head { display: grid; grid-template-columns: 1fr 52px; align-items: center; gap: 4px; margin-bottom: 5px; }
-    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.0px; line-height: 1.35; }
-    .cert-head .qr-box { padding: 2px; }
+    .cert-head { margin-bottom: 5px; }
+    .cert-head-txt { text-align: center; font-weight: bold; font-size: 7.2px; line-height: 1.35; }
     .cert-title { text-align: center; font-weight: bold; font-size: 8.1px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 3px 0; margin: 4.5px 0; }
     .cert-props { border: 1px solid #000; border-radius: 5px; padding: 5px 6px; margin-bottom: 5px; line-height: 1.45; font-size: 7.7px; text-align: left; }
     .cert-tbl { width: 100%; border-collapse: collapse; font-size: 7.7px; }
@@ -168,7 +180,6 @@
     }
     .cert-logo-center { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
     .logo-cert { max-height: 108px; max-width: 220px; object-fit: contain; }
-    .cert-qr-bottom { position: absolute; right: 2px; bottom: 2px; }
   </style>
 </head>
 <body>
@@ -288,6 +299,16 @@
       </div>
     </div>
 
+    <div id="cajaQrUnico" class="card qr-unico-card hidden">
+      <h3 style="font-size:15px; color:#16489c;">Código QR Único (300 x 300) — Planilla N° <span id="qrNumLabel"></span></h3>
+      <div id="qrUnico" class="qr-300-box"></div>
+      <div style="font-size:12px; color:#475569; word-break:break-all;" id="qrUrlTexto"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+        <button type="button" class="btn btn-primary" onclick="descargarImagenQR()">Descargar QR (300x300)</button>
+        <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
+      </div>
+    </div>
+
     <div id="barraPdf" class="toolbar-pdf hidden">
       <button type="button" class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
     </div>
@@ -307,7 +328,6 @@
                     ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
                     SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
                   </div>
-                  <div class="doc-header-center"><div id="qrTop" class="qr-box"></div></div>
                   <div class="doc-header-right"><img id="imgLogoTop" class="logo-top" alt="Caroní" /></div>
                 </div>
 
@@ -426,7 +446,6 @@
                       ALCALDÍA DEL MUNICIPIO CARONÍ<br/>
                       SUPERINTENDENCIA DE ADMINISTRACIÓN TRIBUTARIA DEL MUNICIPIO CARONI
                     </div>
-                    <div id="qrCert" class="qr-box"></div>
                   </div>
                   <div class="cert-title">CERTIFICADO DE SOLVENCIA DE IMPUESTO SOBRE VEHÍCULO</div>
                   <div class="cert-props">
@@ -458,7 +477,6 @@
                   <div class="cert-logo-center">
                     <img id="imgLogoCert" class="logo-cert" alt="Caroní" />
                   </div>
-                  <div class="cert-qr-bottom"><div id="qrBottom" class="qr-box"></div></div>
                 </div>
               </div>
             </div>
@@ -733,6 +751,7 @@
     function cerrarAdmin() {
       document.getElementById("barraTop").classList.add("hidden");
       document.getElementById("vistaAdmin").classList.add("hidden");
+      document.getElementById("cajaQrUnico").classList.add("hidden");
       document.getElementById("contenedorHoja").classList.add("hidden");
       document.getElementById("barraPdf").classList.add("hidden");
       document.getElementById("vistaLogin").classList.remove("hidden");
@@ -869,7 +888,7 @@
         height: size,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.L
+        correctLevel: QRCode.CorrectLevel.M
       });
       const imgs = el.querySelectorAll("img");
       if (imgs.length > 1) {
@@ -879,6 +898,23 @@
       if (canvases.length > 1) {
         for (let i = 1; i < canvases.length; i++) canvases[i].remove();
       }
+    }
+
+    function descargarImagenQR() {
+      if (!registroActual) return;
+      const box = document.getElementById("qrUnico");
+      const canvas = box.querySelector("canvas");
+      const img = box.querySelector("img");
+      const link = document.createElement("a");
+      link.download = "QR_300x300_" + registroActual.numero + ".png";
+      if (canvas) {
+        link.href = canvas.toDataURL("image/png");
+      } else if (img && img.src) {
+        link.href = img.src;
+      } else {
+        return;
+      }
+      link.click();
     }
 
     function mostrarPlanilla(r, modoVisor) {
@@ -910,9 +946,13 @@
 
       const baseUrl = window.location.href.split("?")[0];
       const urlPersona = baseUrl + "?id=" + encodeURIComponent(r.numero);
-      generarQR("qrTop", urlPersona, 88);
-      generarQR("qrCert", urlPersona, 48);
-      generarQR("qrBottom", urlPersona, 76);
+
+      if (!modoVisor) {
+        generarQR("qrUnico", urlPersona, 300);
+        document.getElementById("qrNumLabel").textContent = r.numero;
+        document.getElementById("qrUrlTexto").textContent = urlPersona;
+        document.getElementById("cajaQrUnico").classList.remove("hidden");
+      }
 
       document.getElementById("contenedorHoja").classList.remove("hidden");
       document.getElementById("barraPdf").classList.toggle("hidden", !!modoVisor);
